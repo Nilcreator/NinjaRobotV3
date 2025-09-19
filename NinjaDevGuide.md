@@ -235,3 +235,33 @@ To run the tool:
 ```bash
 uv run python -m pi0ninja_v3.show_faces
 ```
+
+### 4.3 Robot Sound Player
+
+The `pi0ninja_v3.robot_sound` module provides an interactive command-line tool for playing sounds associated with 14 different robot emotions.
+
+**Architecture:**
+- **`RobotSoundPlayer` Class:** This is the core of the module. Its constructor initializes `pigpio` and the `pi0buzzer.driver.Buzzer`, automatically locating the buzzer pin from the `buzzer.json` file in the project root.
+- **`SOUNDS` Dictionary:** A static dictionary that maps emotion strings (e.g., "happy", "sad") to melodies. Each melody is a list of `(note, duration)` tuples, allowing for expressive, custom-composed sounds for each emotion.
+- **`play(emotion)` Method:** This method looks up the requested emotion in the `SOUNDS` dictionary and plays the corresponding melody through the buzzer instance.
+- **Interactive Menu:** The `main()` function creates an instance of the player and runs a loop that displays the list of available sounds, waits for user input, and calls the `play()` method. This provides a simple way to test and demonstrate the feature.
+
+To run the tool:
+```bash
+uv run python -m pi0ninja_v3.robot_sound
+```
+
+### 4.4 Distance Detector
+
+The `pi0ninja_v3.detect_distance` module is a utility for taking measurements with the VL53L0X Time-of-Flight sensor.
+
+**Architecture:**
+- **`DistanceDetector` Class:** Manages the connection to `pigpio` and the `vl53l0x_pigpio.VL53L0X` sensor.
+- **`timed_detection()` Method:** Prompts the user for a number of readings and a delay, then performs the measurements in a simple loop.
+- **`continuous_detection()` Method:** Runs a loop that reads the sensor at 5Hz. It uses non-blocking keyboard input (`select`, `tty`, `termios`) to listen for a 'q' key press to exit, allowing the measurement loop to run without being paused by a blocking input call.
+- **Interactive Menu:** The `main()` function provides a simple menu to allow the user to choose between the timed and continuous detection modes.
+
+To run the tool:
+```bash
+uv run python -m pi0ninja_v3.detect_distance
+```

@@ -1,6 +1,7 @@
 import time
 import json
 import pigpio
+import threading
 from PIL import Image, ImageDraw, ImageFont
 
 # Import drivers
@@ -9,6 +10,7 @@ from pi0disp import ST7789V
 from pi0buzzer.driver import Buzzer
 from vl53l0x_pigpio import VL53L0X
 from pi0ninja_v3.facial_expressions import AnimatedFaces
+from pi0ninja_v3.robot_sound import RobotSoundPlayer
 from pathlib import Path
 
 # --- Configuration File Paths ---
@@ -73,36 +75,35 @@ def main():
         print("Initializing buzzer...")
         buzzer = Buzzer(pi, buzzer_pin, config_file=BUZZER_CONFIG_FILE)
 
+        print("Initializing sound player...")
+        sound_player = RobotSoundPlayer()
+
         print("Initializing distance sensor...")
         tof = VL53L0X(pi)
 
         # --- Robot Actions ---
 
-        # 1. Test Animated Facial Expressions
-        print("Testing animated facial expressions...")
+        # 1. Test Animated Facial Expressions with Sound
+        print("Testing animated facial expressions with sound...")
         faces = AnimatedFaces(lcd)
 
-        # List of all animation methods to play
-        animations = [
-            faces.play_idle,
-            faces.play_happy,
-            faces.play_laughing,
-            faces.play_sad,
-            faces.play_cry,
-            faces.play_angry,
-            faces.play_surprising,
-            faces.play_sleepy,
-            faces.play_speaking,
-            faces.play_shy,
-            faces.play_embarrassing,
-            faces.play_scary,
-            faces.play_exciting,
-            faces.play_confusing,
+        # List of all emotions to play
+        emotions = [
+            'idle', 'happy', 'laughing', 'sad', 'cry', 'angry', 'surprising',
+            'sleepy', 'speaking', 'shy', 'embarrassing', 'scary', 'exciting', 'confusing'
         ]
 
-        for animate in animations:
-            animate(duration_s=3) # Play each animation for 3 seconds
-            time.sleep(0.5) # Pause between animations
+        for emotion in emotions:
+            animation_method = getattr(faces, f"play_{emotion}")
+            
+            # Play sound in a separate thread to run concurrently with animation
+            sound_thread = threading.Thread(target=sound_player.play, args=(emotion,))
+            sound_thread.start()
+            
+            # Play the animation (this is a blocking call for its duration)
+            animation_method(duration_s=3)
+            
+            time.sleep(0.5) # Pause between expressions
 
         print("Facial expression test complete.")
         # Revert to a neutral face for the next steps
@@ -150,6 +151,8 @@ def main():
     finally:
         # --- Cleanup ---
         print("\nCleaning up resources...")
+        if sound_player:
+            sound_player.cleanup()
         if servos:
             servos.off()
         if lcd:

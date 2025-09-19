@@ -266,7 +266,7 @@ pi0buzzer playmusic
 
 ### 2.5. `pi0ninja_v3` - Robot Control Hub
 
-The `pi0ninja_v3` library is the central controller for the NinjaRobot, integrating various drivers to create complex behaviors.
+`pi0ninja_v3` is the central library that brings together all the hardware drivers to create high-level robot behaviors. It includes several utility scripts for direct interaction.
 
 #### Servo Movement Recorder
 
@@ -294,11 +294,55 @@ uv run python -m pi0ninja_v3.show_faces
 
 **How to Use**
 
-1.  **Idle State:** When the script starts, it will immediately display a continuous "idle" animation with random blinks. The robot will remain in this state until you interact with it.
-2.  **Open Menu:** While the idle animation is running, press the `m` key to pause the animation and bring up the expression selection menu in your terminal.
-3.  **Select Expression:** Enter the number corresponding to the face you want to see. The selected animation will play for 5 seconds.
+1.  **Idle State:** When the script starts, it will immediately display a continuous "idle" animation with random blinks.
+2.  **Open Menu:** While the idle animation is running, press the `m` key to pause the animation and bring up the expression selection menu.
+3.  **Select Expression:** Enter the number corresponding to the face you want to see.
 4.  **Return to Idle:** After the animation finishes, the robot will automatically return to the continuous idle state.
 5.  **Quit:** While the idle animation is running, press the `q` key to exit the program gracefully.
+
+#### Robot Sound Player
+
+This tool uses the buzzer to play sounds that correspond to the robot's facial expressions.
+
+**How to Run**
+
+```bash
+uv run python -m pi0ninja_v3.robot_sound
+```
+
+**How to Use**
+
+When you run the command, an interactive menu will appear. Enter the number corresponding to the emotion sound you want to hear. The available sounds are:
+- Angry
+- Confusing
+- Cry
+- Embarrassing
+- Exciting
+- Happy
+- Idle
+- Laughing
+- Sad
+- Scary
+- Shy
+- Sleepy
+- Speaking
+- Surprising
+
+#### Distance Detector
+
+This utility uses the VL53L0X time-of-flight sensor to measure the distance to an object.
+
+**How to Run**
+
+```bash
+uv run python -m pi0ninja_v3.detect_distance
+```
+
+**How to Use**
+
+Running the command will bring up a menu with two options:
+1.  **Timed Detection:** Prompts you to enter a number of measurements to take and the time delay between them.
+2.  **Continuous Detection:** Measures the distance five times per second, updating the value on a single line. Press `q` to stop.
 
 ---
 

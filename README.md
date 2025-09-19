@@ -14,7 +14,20 @@ This installs all necessary local packages in editable mode.
 
 ## Development History
 
-### 2025-09-19: Facial Expression Viewer
+### 2025-09-19: Simultaneous Sound and Animation
+
+- **Integrated Emotions:** Enhanced `main_robot_control.py` to play emotion-specific sounds and display facial animations simultaneously. 
+- **Concurrent Playback:** Utilized Python's `threading` library to run the sound and animation loops in parallel, creating a more immersive and expressive robot experience.
+
+### 2025-09-19: Interactive Utilities & Documentation
+
+- **Robot Sound Player:** Created `robot_sound.py`, a new utility in the `pi0ninja_v3` library to play sounds for 14 robot emotions. It features an interactive menu for selecting and playing sounds.
+- **Distance Detector:** Developed `detect_distance.py`, a tool for measuring distance with the VL53L0X sensor. It provides an interactive choice between a timed mode (set number of readings) and a continuous 5Hz mode.
+- **Buzzer Enhancements:** Updated the `pi0buzzer` library with a corrected 3-octave note map and added a "Happy Birthday" song that plays automatically when the `playmusic` command is run.
+- **Bug Fixes & Refinements:** Corrected a file path issue in the sound player to properly locate `buzzer.json`. Refactored the distance detector's command-line interface to be fully interactive, improving usability.
+- **Comprehensive Documentation:** Updated `NinjaUserGuide.md` with instructions for the new interactive tools and `NinjaDevGuide.md` with detailed technical explanations of their architecture. Consolidated today's progress into this single log entry.
+
+### 2025-09-18: Documentation Overhaul
 
 - **New Utility:** Created the `show_faces.py` script, an interactive tool for previewing all facial expressions on the robot's display.
 - **Persistent Idle State:** The tool features a continuous, non-blocking idle animation with random blinks, which serves as the robot's default state.
