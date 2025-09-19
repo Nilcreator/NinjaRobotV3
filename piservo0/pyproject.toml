@@ -1,0 +1,58 @@
+[project]
+name = "piservo0"
+dynamic = ["version"]
+description = "Python library for servo motor control."
+readme = "README.md"
+authors = [
+    { name = "Yoichi Tanibayashi", email = "yoichi@tanibayashi.jp" }
+]
+requires-python = ">=3.11"
+dependencies = [
+    "pigpio",
+    "click",
+    "blessed",
+    "requests",
+    "fastapi",
+    "uvicorn",
+]
+
+[build-system]
+requires = ["hatchling", "hatch-vcs"]
+build-backend = "hatchling.build"
+
+[tool.hatch.version]
+source = "vcs"
+
+[project.scripts]
+piservo0 = "piservo0.__main__:cli"
+
+[tool.ruff]
+line-length = 78
+target-version = "py311"
+lint.select = ["E", "F", "I"]
+exclude = ["tests/data"]
+
+[tool.pyright]
+typeCheckingMode = "standard"
+
+[tool.pytest.ini_options]
+pythonpath = "tests"
+
+[dependency-groups]
+dev = [
+    "mypy>=1.17.0",
+    "pytest>=8.4.1",
+    "pytest-mock",
+    "ruff>=0.12.3",
+    "flake8>=7.3.0",
+    "isort>=6.0.1",
+    "pylint>=3.3.7",
+    "pyright>=1.1.403",
+]
+samples = [
+]
+
+[[tool.mypy.overrides]]
+module = ['pigpio', 'fastapi', 'requests']
+ignore_missing_imports = true
+

@@ -1,0 +1,19 @@
+
+[project]
+name = "pi0buzzer"
+version = "0.1.0"
+description = "A simple buzzer driver for Raspberry Pi."
+readme = "README.md"
+authors = [{ name = "Gemini", email = "gemini@google.com" }]
+requires-python = ">=3.11"
+dependencies = [
+    "pigpio",
+    "click",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project.scripts]
+pi0buzzer = "pi0buzzer.__main__:cli"
