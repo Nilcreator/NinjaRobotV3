@@ -14,6 +14,25 @@ This installs all necessary local packages in editable mode.
 
 ## Development History
 
+### 2025-09-20: Web Server Usability
+
+- **Enhanced Startup Message**: Improved the web server's startup sequence to automatically detect and display both the hostname and IP address connection URLs, making it easier for users to connect to the robot's control panel.
+
+### 2025-09-20: Servo Driver Bug Fix
+
+- **Problem**: Fixed a `pigpio.error: 'GPIO is not in use for servo pulses'` that occurred when executing a servo movement from the web interface for the first time.
+- **Root Cause**: The error was caused by the system trying to read the current position of a servo that had not yet been activated, resulting in an invalid state.
+- **Solution**: Made the underlying `piservo0` driver more robust. The `get_pulse()` method was updated to catch the error and return a default center value, allowing movements to start correctly from a "cold" state.
+
+### 2025-09-20: Web Control Interface
+
+- **Web Server Implementation**: Developed a web server using FastAPI within the `pi0ninja_v3` library to provide remote control of the robot over a local Wi-Fi network.
+- **Backend API**: Created a comprehensive RESTful API to expose all core robot functionalities, including servo movements, facial expressions, sounds, and distance sensor readings.
+- **Hardware Lifecycle Management**: Implemented a robust lifecycle manager using FastAPI's `lifespan` feature to ensure all hardware components are initialized and shut down gracefully.
+- **Web-Based UI**: Built a clean, responsive user interface with HTML, CSS, and JavaScript that acts as a control panel. The UI is served directly from the FastAPI backend.
+- **Documentation**: Updated the `NinjaUserGuide.md` and `NinjaDevGuide.md` with detailed instructions and technical specifications for the new web server. Added a `web-server` command to `pyproject.toml` for easy launching.
+- **Real-Time Sensor Data**: Implemented a WebSocket endpoint to stream distance sensor data to the web interface in real-time, replacing the previous polling mechanism.
+
 ### 2025-09-19: Simultaneous Sound and Animation
 
 - **Integrated Emotions:** Enhanced `main_robot_control.py` to play emotion-specific sounds and display facial animations simultaneously. 

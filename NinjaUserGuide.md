@@ -344,6 +344,41 @@ Running the command will bring up a menu with two options:
 1.  **Timed Detection:** Prompts you to enter a number of measurements to take and the time delay between them.
 2.  **Continuous Detection:** Measures the distance five times per second, updating the value on a single line. Press `q` to stop.
 
+#### Web Control Interface
+
+The `pi0ninja_v3` library includes a web-based control panel that allows you to control all of the robot's main functions from a web browser on the same network.
+
+**How to Run**
+
+To start the web server, run the following command from the project's root directory:
+
+```bash
+uv run web-server
+```
+
+Once the server starts, it will print a helpful message in your terminal showing the exact URLs you can use to connect. It will look like this:
+
+```text
+--- NinjaRobot Web Server is starting! ---
+
+Connect to the robot from a browser on the same Wi-Fi network:
+  - By Hostname:  http://ninjarobot.local:8000
+  - By IP Address: http://192.168.1.10:8000
+
+Waiting for application startup... (Press CTRL+C to quit)
+```
+
+Simply open one of these two URLs in a web browser on any device that is on the same Wi-Fi network as the robot. Using the hostname is generally the most reliable method.
+
+**How to Use**
+
+The web interface is divided into four sections:
+
+-   **Servo Movements**: Select a pre-recorded movement from the dropdown list and click "Execute" to make the robot perform the action.
+-   **Facial Expressions**: Select a facial expression from the dropdown and click "Show" to display it on the robot's screen for a few seconds.
+-   **Emotion Sounds**: Select an emotion from the dropdown and click "Play" to hear the corresponding sound from the buzzer.
+-   **Distance Sensor**: This panel provides a live, real-time reading of the distance sensor, updated several times per second via a WebSocket connection.
+
 ---
 
 ### 2.5. `pi0ninja_v3` - ロボット制御ハブ

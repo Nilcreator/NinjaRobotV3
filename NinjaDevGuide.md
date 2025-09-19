@@ -22,11 +22,14 @@ Next, install each driver in editable mode. This allows you to make changes to t
 
 ```bash
 # From the NinjaRobotV3 directory
+uv pip install -e ./pi0ninja_v3
 uv pip install -e ./pi0buzzer
 uv pip install -e ./pi0disp
 uv pip install -e ./piservo0
 uv pip install -e ./vl53l0x_pigpio
 ```
+
+> **Note**: If you modify the `pyproject.toml` file for any of these packages (for example, to add a new dependency or a `[project.scripts]` entry), you should re-run the `uv pip install -e ./<package_name>` command for that package to ensure the changes are applied to your environment.
 
 ## 2. Configuration Files
 
@@ -264,4 +267,46 @@ The `pi0ninja_v3.detect_distance` module is a utility for taking measurements wi
 To run the tool:
 ```bash
 uv run python -m pi0ninja_v3.detect_distance
+```
+
+### 4.5 Web Control Server
+
+The `pi0ninja_v3` library includes a web server (`web_server.py`) built with FastAPI, providing a modern, browser-based interface for controlling the robot.
+
+**Architecture:**
+
+- **FastAPI Backend**: The server provides a RESTful API for all core robot functions (servos, display, sound, sensor).
+- **Hardware Lifecycle**: It uses FastAPI's `lifespan` context manager to ensure all hardware controllers are initialized correctly on startup and shut down gracefully. A single `pigpio` instance is shared where possible, and all hardware controllers are accessible via the `app.state.controllers` dictionary within request handlers.
+- **Static Frontend**: The user interface is a simple, single-page application built with HTML, CSS, and vanilla JavaScript. The files are served directly by FastAPI using `StaticFiles` and `Jinja2Templates`.
+- **Asynchronous by Design**: The server is run with `uvicorn`, an ASGI server, allowing for asynchronous handling of requests.
+- **Real-Time Sensor Data**: A WebSocket endpoint at `/ws/distance` streams live data from the distance sensor, providing a more responsive experience than traditional HTTP polling.
+
+**How to Run:**
+
+To start the web server, use the following command:
+
+```bash
+uv run web-server
+```
+
+**Extending the API:**
+
+To add a new API endpoint, follow the existing pattern in `web_server.py`:
+
+1.  **Add a new route** to the `api_router` instance.
+2.  In your route function, access the necessary hardware controller from the `request.app.state.controllers` dictionary.
+3.  Call the desired method on the controller.
+4.  Return a JSON response.
+
+For example, to add an endpoint to get the robot's uptime:
+
+```python
+import time
+
+start_time = time.time()
+
+@api_router.get("/system/uptime")
+def get_uptime():
+    uptime_seconds = time.time() - start_time
+    return {"uptime_seconds": round(uptime_seconds)}
 ```

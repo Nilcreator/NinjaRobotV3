@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NinjaRobot Control Panel</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <h1>NinjaRobot Control Panel</h1>
+
+    <div id="app">
+        <div class="control-section" id="servo-controls">
+            <h2>Servo Movements</h2>
+            <div class="control-group">
+                <select id="movements-select"></select>
+                <button id="execute-movement-btn">Execute</button>
+            </div>
+        </div>
+
+        <div class="control-section" id="display-controls">
+            <h2>Facial Expressions</h2>
+            <div class="control-group">
+                <select id="expressions-select"></select>
+                <button id="show-expression-btn">Show</button>
+            </div>
+        </div>
+
+        <div class="control-section" id="sound-controls">
+            <h2>Emotion Sounds</h2>
+            <div class="control-group">
+                <select id="emotions-select"></select>
+                <button id="play-emotion-btn">Play</button>
+            </div>
+        </div>
+
+        <div class="control-section" id="sensor-controls">
+            <h2>Distance Sensor</h2>
+            <div id="distance-display">- mm</div>
+        </div>
+    </div>
+
+    <script src="/static/main.js"></script>
+</body>
+</html>

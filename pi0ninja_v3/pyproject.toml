@@ -8,7 +8,14 @@ dependencies = [
     "pillow",
     "pi0disp",
     "piservo0",
+    "fastapi",
+    "uvicorn[standard]",
+    "jinja2",
 ]
+
+[project.scripts]
+web-server = "pi0ninja_v3.web_server:main"
+
 
 [build-system]
 requires = ["uv_build>=0.8.14,<0.9.0"]

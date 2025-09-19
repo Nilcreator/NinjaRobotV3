@@ -2,6 +2,8 @@
 # (c) 2025 Yoichi Tanibayashi
 #
 """piservo.py"""
+import pigpio
+
 from ..utils.my_logger import get_logger
 
 
@@ -46,12 +48,22 @@ class PiServo:
     def get_pulse(self):
         """Get pulse.
 
+        Returns the center pulse value if the servo is not currently active
+        to prevent errors on first read.
+
         Returns:
             int: pulse width (micro sec)
         """
-        pulse = self.pi.get_servo_pulsewidth(self.pin)
-        self.__log.debug("pulse=%s", pulse)
-        return pulse
+        try:
+            pulse = self.pi.get_servo_pulsewidth(self.pin)
+            if pulse == 0:
+                self.__log.warning("pin %s: pulse=0, using center", self.pin)
+                return self.CENTER
+            self.__log.debug("pulse=%s", pulse)
+            return pulse
+        except pigpio.error:
+            self.__log.warning("pin %s: pigpio err, using center", self.pin)
+            return self.CENTER
 
     def move_pulse(self, pulse):
         """サーボモーターを指定されたパルス幅に移動させる。
