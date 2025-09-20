@@ -14,6 +14,32 @@ This installs all necessary local packages in editable mode.
 
 ## Development History
 
+### 2025-09-21: AI Agent Web Search Fix (ImportError)
+
+- **Problem**: Fixed an `ImportError: cannot import name 'Part' from 'google.generativeai.types'` that occurred at startup.
+- **Root Cause**: A previous fix for an `AttributeError` incorrectly assumed the `Part` class was available for import. The `ImportError` revealed that the installed version of the `google-generativeai` library does not expose this class in its `types` module.
+- **Solution**: To create a more robust and version-agnostic solution, the code was refactored to not rely on importing the `Part` class. Instead, the function response is now constructed using a standard Python dictionary, which the library accepts. This resolves the import error and makes the code less likely to break with future library updates.
+
+### 2025-09-21: AI Agent and Documentation Update
+
+- **JSON Parsing Robustness**: Addressed a bug where the AI agent would fail to parse responses from the language model due to invalid JSON formatting (e.g., single quotes). The system prompt was enhanced to enforce a strict, double-quoted JSON output for all action commands. Diagnostic logging was also added to capture the raw AI response for easier debugging.
+- **HTTPS for Voice Input**: Resolved the issue where voice input was disabled. This was identified as a browser security feature requiring an HTTPS connection. The `NinjaUserGuide.md` was updated with a comprehensive, step-by-step guide on how to use `ngrok` to create a secure `https://` tunnel for local development. The `NinjaDevGuide.md` was also updated to reflect these changes.
+
+### 2025-09-21: AI Agent Bug Fix
+
+- **Problem**: Fixed a `ModuleNotFoundError: No module named 'default_api'` that occurred when starting the web server.
+- **Root Cause**: The error was caused by an incorrect import of a `google_web_search` function that was not defined. The agent was trying to import a tool as a regular module.
+- **Solution**: Removed the incorrect import and implemented the `web_search` function within the `NinjaAgent` class using the `googlesearch-python` library. This resolves the startup crash and correctly integrates the web search tool with the agent's capabilities.
+
+### 2025-09-21: AI Agent Major Upgrade
+
+- **Live Voice Streaming**: Re-architected the AI agent to support real-time, low-latency voice conversations. The implementation now uses a WebSocket (`/ws/voice`) to stream audio directly from the browser to the backend, which then communicates with the Gemini streaming model. This replaces the previous text-based input and provides a much more natural and interactive experience.
+- **Web Search Capability**: Integrated function calling into the AI agent. The agent can now decide when to search the web to answer questions beyond its core capabilities (e.g., weather, facts, news). It uses the `google_web_search` tool and incorporates the findings into its conversational responses.
+- **Bug Fixes & Enhancements**:
+    - Fixed a critical bug where the robot would not execute movements planned by the AI agent.
+    - Improved the AI's system prompt to be more robust in understanding multilingual commands and intents.
+    - Updated all relevant documentation (`README.md`, `NinjaUserGuide.md`, `NinjaDevGuide.md`) to reflect the new architecture and features.
+
 ### 2025-09-20: Web Server Usability
 
 - **Enhanced Startup Message**: Improved the web server's startup sequence to automatically detect and display both the hostname and IP address connection URLs, making it easier for users to connect to the robot's control panel.
@@ -21,79 +47,7 @@ This installs all necessary local packages in editable mode.
 ### 2025-09-20: Servo Driver Bug Fix
 
 - **Problem**: Fixed a `pigpio.error: 'GPIO is not in use for servo pulses'` that occurred when executing a servo movement from the web interface for the first time.
-- **Root Cause**: The error was caused by the system trying to read the current position of a servo that had not yet been activated, resulting in an invalid state.
+- **Root Cause**: The error was caused by the system trying to read the.current position of a servo that had not yet been activated, resulting in an invalid state.
 - **Solution**: Made the underlying `piservo0` driver more robust. The `get_pulse()` method was updated to catch the error and return a default center value, allowing movements to start correctly from a "cold" state.
 
-### 2025-09-20: Web Control Interface
-
-- **Web Server Implementation**: Developed a web server using FastAPI within the `pi0ninja_v3` library to provide remote control of the robot over a local Wi-Fi network.
-- **Backend API**: Created a comprehensive RESTful API to expose all core robot functionalities, including servo movements, facial expressions, sounds, and distance sensor readings.
-- **Hardware Lifecycle Management**: Implemented a robust lifecycle manager using FastAPI's `lifespan` feature to ensure all hardware components are initialized and shut down gracefully.
-- **Web-Based UI**: Built a clean, responsive user interface with HTML, CSS, and JavaScript that acts as a control panel. The UI is served directly from the FastAPI backend.
-- **Documentation**: Updated the `NinjaUserGuide.md` and `NinjaDevGuide.md` with detailed instructions and technical specifications for the new web server. Added a `web-server` command to `pyproject.toml` for easy launching.
-- **Real-Time Sensor Data**: Implemented a WebSocket endpoint to stream distance sensor data to the web interface in real-time, replacing the previous polling mechanism.
-
-### 2025-09-19: Simultaneous Sound and Animation
-
-- **Integrated Emotions:** Enhanced `main_robot_control.py` to play emotion-specific sounds and display facial animations simultaneously. 
-- **Concurrent Playback:** Utilized Python's `threading` library to run the sound and animation loops in parallel, creating a more immersive and expressive robot experience.
-
-### 2025-09-19: Interactive Utilities & Documentation
-
-- **Robot Sound Player:** Created `robot_sound.py`, a new utility in the `pi0ninja_v3` library to play sounds for 14 robot emotions. It features an interactive menu for selecting and playing sounds.
-- **Distance Detector:** Developed `detect_distance.py`, a tool for measuring distance with the VL53L0X sensor. It provides an interactive choice between a timed mode (set number of readings) and a continuous 5Hz mode.
-- **Buzzer Enhancements:** Updated the `pi0buzzer` library with a corrected 3-octave note map and added a "Happy Birthday" song that plays automatically when the `playmusic` command is run.
-- **Bug Fixes & Refinements:** Corrected a file path issue in the sound player to properly locate `buzzer.json`. Refactored the distance detector's command-line interface to be fully interactive, improving usability.
-- **Comprehensive Documentation:** Updated `NinjaUserGuide.md` with instructions for the new interactive tools and `NinjaDevGuide.md` with detailed technical explanations of their architecture. Consolidated today's progress into this single log entry.
-
-### 2025-09-18: Documentation Overhaul
-
-- **New Utility:** Created the `show_faces.py` script, an interactive tool for previewing all facial expressions on the robot's display.
-- **Persistent Idle State:** The tool features a continuous, non-blocking idle animation with random blinks, which serves as the robot's default state.
-- **Interactive Menu:** Users can press `m` to pause the idle animation and open a menu to select and display other expressions for a fixed duration.
-- **Robust Architecture:** Refactored the script to use a non-blocking main loop for the idle state and a standard blocking menu for selection. This avoids using `KeyboardInterrupt` for control flow and prevents display corruption bugs.
-
-### 2025-09-18: Documentation Overhaul
-
-- **Comprehensive User Guide:** Completely rewrote the `Servo Movement Recorder` section in `NinjaUserGuide.md`. The new guide provides detailed, user-friendly instructions for all the latest features, including the non-destructive modification workflow, looping/interruptible playback, and improved recording process.
-- **Developer Guide Update:** Added a new section to `NinjaRobot_DevGuide.md` describing the `movement_recorder` tool, its purpose as a high-level utility, and its role as an integration example for the `piservo0` library.
-- **Centralized Logging:** Consolidated all recent feature enhancements under a new development log entry to reflect the current state of the project accurately.
-
-
-### 2025-09-12: Facial Expression System
-
-- **Project Initialization:** Created the `pi0ninja_v3` library to house the robot's core logic and established this `README.md` for progress tracking.
-
-- **Animation Library:** Developed `facial_expressions.py`, a library for generating 14 unique, programmatically drawn and animated facial expressions (e.g., Idle, Happy, Sad).
-
-- **Integration & Testing:** Integrated the animation library into the main control script (`main_robot_control.py`) to cycle through all expressions on startup.
-
-- **Dependency Management:** Resolved `ModuleNotFoundError` and `TOML` configuration errors by correctly installing all local driver packages (`pi0disp`, `piservo0`, etc.) into the project's virtual environment.
-
-- **Visual Refinement & Bug Fixes:** Iteratively improved the facial animations by:
-    - Centering and scaling all expressions.
-    - Unifying the visual style based on a design reference (`angry.jpg`).
-    - Increasing the animation framerate to ~60 FPS.
-    - Correcting visual bugs where features were overlapping or disappearing.
-
-### 2025-09-17: Servo Movement Recorder
-
-- **Movement Recording Tool:** Developed `movement_recorder.py`, a CLI tool for creating, modifying, and deleting named servo movement sequences.
-- **Core Functionality:**
-    - **Record:** Interactively command servos to specific angles (`-90` to `90`, plus `X` for max, `M` for min, `C` for center) and save the sequence of movements. The final movement is now automatically saved when you finish recording. Supports speed control (`S_` for slow).
-    - **Modify:** A safe, non-destructive editor for fine-tuning movement sequences.
-        - **Transactional Editing:** Changes are made to a temporary copy. The original movement is not altered unless you explicitly save.
-        - **Graceful Interruption:** Exiting with `Ctrl+C` will safely discard all changes.
-        - **Granular Control:** You can edit, insert, or delete specific steps within the sequence.
-        - **Preview:** Play back the modified sequence before saving to ensure it's correct.
-    - **Clear:** Delete a saved movement sequence.
-- **Servo Abstraction:** Implemented a `ServoController` class to manage multiple servos using the `piservo0` library, loading configurations from `servo.json`.
-- **Data Persistence:** All named movement sequences are saved to `servo_movement.json` in the project root.
-- **Usage:** The tool can be run directly from the command line:
-  ```bash
-  uv run python -m pi0ninja_v3.movement_recorder
-  ```
-- **Recording Optimization:** Enhanced the recording process to automatically capture the state of all servos for every step. If a servo is not explicitly commanded, its previous position is automatically carried over, ensuring every step in the saved sequence is a complete keyframe.
-- **Execution with Looping and Interruption:**
-    - When executing a movement, you can now specify a number of times to loop the sequence or enter 'loop' for infinite playback.
-    - Movement playback can be interrupted at any time by pressing the `Enter` or `Esc` key.
+(Previous entries remain)

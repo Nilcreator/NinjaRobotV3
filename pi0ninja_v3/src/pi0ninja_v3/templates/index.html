@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -10,6 +11,7 @@
     <h1>NinjaRobot Control Panel</h1>
 
     <div id="app">
+        <!-- Existing Controls -->
         <div class="control-section" id="servo-controls">
             <h2>Servo Movements</h2>
             <div class="control-group">
@@ -37,6 +39,26 @@
         <div class="control-section" id="sensor-controls">
             <h2>Distance Sensor</h2>
             <div id="distance-display">- mm</div>
+        </div>
+
+        <!-- New AI Agent Section -->
+        <div class="control-section" id="agent-controls">
+            <h2>Ninja AI Agent</h2>
+            <button id="set-api-key-btn">Set/Update AI API Key</button>
+            
+            <div id="chat-container" style="display: none;">
+                <div id="chat-history"></div>
+                <div id="chat-input-container">
+                    <input type="text" id="chat-input" placeholder="Ask the robot to do something...">
+                    <button id="mic-btn">🎤</button>
+                    <button id="chat-send-btn">Send</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="control-section" id="log-controls" style="display: none;">
+            <h2>System Log</h2>
+            <pre id="system-log"></pre>
         </div>
     </div>
 
