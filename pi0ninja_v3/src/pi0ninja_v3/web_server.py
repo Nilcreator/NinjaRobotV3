@@ -7,6 +7,9 @@ import inspect
 import time
 from contextlib import asynccontextmanager
 import asyncio
+import subprocess
+import atexit
+import requests
 from fastapi import FastAPI, APIRouter, Request, HTTPException, WebSocket, WebSocketDisconnect
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
@@ -27,6 +30,7 @@ from pi0ninja_v3.ninja_agent import NinjaAgent
 NINJA_ROBOT_V3_ROOT = "/home/rogerchang/NinjaRobotV3"
 BUZZER_CONFIG_FILE = os.path.join(NINJA_ROBOT_V3_ROOT, "buzzer.json")
 DOTENV_PATH = os.path.join(NINJA_ROBOT_V3_ROOT, ".env")
+NGROK_PROC = None
 
 base_dir = os.path.dirname(os.path.abspath(__file__))
 controllers = {}
@@ -39,7 +43,41 @@ class SetApiKeyRequest(BaseModel):
 class AgentChatRequest(BaseModel):
     message: str
 
-# --- Hardware Lifecycle Management ---
+# --- Ngrok and Hardware Lifecycle Management ---
+def start_ngrok(port: int):
+    """Starts ngrok as a subprocess."""
+    global NGROK_PROC
+    print("Starting ngrok tunnel...")
+    ngrok_path = os.path.join(NINJA_ROBOT_V3_ROOT, "ngrok")
+    if not os.path.exists(ngrok_path):
+        print("Warning: ngrok executable not found. Cannot create secure tunnel.")
+        return
+    
+    NGROK_PROC = subprocess.Popen([ngrok_path, "http", str(port)], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    atexit.register(stop_ngrok)
+    time.sleep(2) # Give ngrok time to initialize
+
+def stop_ngrok():
+    """Stops the ngrok subprocess if it is running."""
+    global NGROK_PROC
+    if NGROK_PROC:
+        print("Stopping ngrok tunnel...")
+        NGROK_PROC.terminate()
+        NGROK_PROC.wait()
+
+def get_ngrok_url():
+    """Fetches the public URL from the local ngrok API."""
+    try:
+        response = requests.get("http://127.0.0.1:4040/api/tunnels")
+        response.raise_for_status()
+        tunnels = response.json().get("tunnels", [])
+        for tunnel in tunnels:
+            if tunnel.get("proto") == "https":
+                return tunnel.get("public_url")
+    except requests.exceptions.RequestException as e:
+        print(f"Could not connect to ngrok API: {e}. Is ngrok running?")
+    return None
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     print("Initializing hardware controllers...")
@@ -243,44 +281,42 @@ async def websocket_voice_endpoint(websocket: WebSocket):
         await websocket.close(code=1011)
         return
 
-    audio_queue = asyncio.Queue()
-    response_queue = asyncio.Queue()
-
-    async def receive_audio():
-        try:
-            while True:
-                await audio_queue.put(await websocket.receive_bytes())
-        except WebSocketDisconnect:
-            await audio_queue.put(None)
-
-    async def run_agent():
-        try:
-            async for response in agent.stream_conversation(audio_queue):
-                await response_queue.put(response)
-        except Exception as e:
-            await response_queue.put({"type": "error", "data": f"Agent error: {e}"})
-        finally:
-            await response_queue.put(None)
-
-    async def send_responses():
-        while True:
-            response = await response_queue.get()
-            if response is None:
-                break
-            if response.get("type") == "action":
-                asyncio.create_task(execute_robot_actions(response["data"], websocket.app.state.controllers))
-            await websocket.send_json(response)
-
     try:
-        await asyncio.gather(receive_audio(), run_agent(), send_responses())
+        while True:
+            # Receive the complete audio file as bytes
+            audio_bytes = await websocket.receive_bytes()
+            
+            # Notify the client that processing has started
+            await websocket.send_json({"type": "log", "data": "Audio received, processing..."})
+
+            # Process the audio
+            result = await agent.process_audio_input(audio_bytes)
+
+            # Send action and response back to the client
+            if "action_plan" in result and result["action_plan"]:
+                asyncio.create_task(execute_robot_actions(result["action_plan"], websocket.app.state.controllers))
+                await websocket.send_json({"type": "action", "data": result["action_plan"]})
+            
+            await websocket.send_json({"type": "response", "data": result.get("response")})
+            await websocket.send_json({"type": "log", "data": result.get("log")})
+
+    except WebSocketDisconnect:
+        print("Client disconnected from voice websocket")
     except Exception as e:
-        print(f"Error in voice websocket: {e}")
+        error_msg = f"Error in voice websocket: {e}"
+        print(error_msg)
+        await websocket.send_json({"type": "error", "data": error_msg})
     finally:
-        await websocket.close()
+        print("Closing voice websocket connection.")
 
 def main():
     port = 8000
     host = "0.0.0.0"
+    
+    # Start ngrok and get the public URL
+    start_ngrok(port)
+    ngrok_url = get_ngrok_url()
+
     hostname = socket.gethostname()
     try:
         s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -293,6 +329,11 @@ def main():
 
     print("--- NinjaRobot Web Server is starting! ---")
     print(f"Connect from a browser on the same network:\n  - By Hostname:  http://{hostname}.local:{port}\n  - By IP Address: http://{ip_address}:{port}")
+    if ngrok_url:
+        print(f"  - For Voice (HTTPS): {ngrok_url}")
     print("\nWaiting for application startup... (Press CTRL+C to quit)")
 
     uvicorn.run("pi0ninja_v3.web_server:app", host=host, port=port, reload=True, log_level="warning")
+
+if __name__ == "__main__":
+    main()

@@ -14,6 +14,22 @@ This installs all necessary local packages in editable mode.
 
 ## Development History
 
+### 2025-09-21: Voice Agent Re-architecture
+
+- **Problem**: The voice agent was unresponsive because the underlying Gemini library does not support true bidirectional audio streaming. The previous implementation was only a diagnostic placeholder.
+- **Solution**: Re-architected the entire voice pipeline to a "record-then-process" model. The frontend now records the user's full utterance and sends the complete audio file to the backend. The `NinjaAgent` was updated with a new `process_audio_input` method that sends the audio data directly to the Gemini API for transcription and execution. This provides a fully functional and reliable voice command experience.
+- **UI**: The frontend was updated to provide clear visual feedback for "recording" and "processing" states.
+
+### 2025-09-21: Automated HTTPS and Voice Agent Diagnostics
+
+- **Ngrok Automation**: Modified the `web_server.py` script to automatically start, manage, and terminate an `ngrok` subprocess. The server now fetches and displays the public HTTPS URL on startup, streamlining the process of enabling the microphone for voice input.
+- **Voice Agent Diagnostic**: Addressed an issue where the voice agent was unresponsive. The `ninja_agent.py` was updated to consume the audio stream and log the receipt of data, confirming the data pipeline is working. This serves as a diagnostic step while a full speech-to-text implementation is pending.
+
+### 2025-09-21: HTTPS Voice Input and Linting
+
+- **HTTPS for Voice Input**: Successfully configured and enabled `ngrok` to provide a secure HTTPS tunnel to the local web server. This resolves the browser security error (`Microphone access requires a secure (HTTPS) connection`) and enables the microphone for live voice interaction with the AI agent.
+- **Code Linting**: Fixed several linting issues in the `pi0ninja_v3` codebase, including unused imports and module-level imports not being at the top of the file, improving code quality and adherence to standards.
+
 ### 2025-09-21: AI Agent Web Search Fix (ImportError)
 
 - **Problem**: Fixed an `ImportError: cannot import name 'Part' from 'google.generativeai.types'` that occurred at startup.

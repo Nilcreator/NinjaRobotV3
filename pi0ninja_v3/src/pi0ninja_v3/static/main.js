@@ -86,19 +86,24 @@ document.addEventListener('DOMContentLoaded', () => {
         voiceSocket.onmessage = (event) => {
             const message = JSON.parse(event.data);
             switch (message.type) {
-                case 'interim_transcript':
-                case 'final_transcript':
-                    chatInput.value = message.data;
-                    break;
                 case 'action':
-                case 'response':
-                    appendMessage('agent', message.data.response);
+                    // The main response text is now part of the action plan
+                    if (message.data.response) {
+                        appendMessage('agent', message.data.response);
+                    }
+                    micBtn.classList.remove('processing');
+                    chatInput.placeholder = 'Ask the robot to do something...';
+                    break;
+                case 'response': // This may contain supplemental text
+                    if(message.data) appendMessage('agent', message.data);
                     break;
                 case 'log':
                     appendLog(message.data);
                     break;
                 case 'error':
                     appendMessage('system-error', message.data);
+                    micBtn.classList.remove('processing');
+                    chatInput.placeholder = 'Ask the robot to do something...';
                     break;
             }
         };

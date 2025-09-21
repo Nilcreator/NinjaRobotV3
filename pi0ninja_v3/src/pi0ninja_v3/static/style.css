@@ -77,3 +77,11 @@ button:hover {
     background-color: #e8f0fe;
     border-radius: 5px;
 }
+
+#mic-btn.listening {
+    background-color: #e74c3c; /* Red */
+}
+
+#mic-btn.processing {
+    background-color: #f1c40f; /* Yellow */
+}

@@ -1,6 +1,5 @@
 import os
 import json
-import asyncio
 import google.generativeai as genai
 from google.generativeai.types import GenerationConfig, Tool
 from pi0ninja_v3.facial_expressions import AnimatedFaces
@@ -36,7 +35,7 @@ class NinjaAgent:
         )
 
         self.model = genai.GenerativeModel(
-            model_name='gemini-1.5-flash',
+            model_name='gemini-2.5-flash',
             generation_config=GenerationConfig(temperature=0.7),
             tools=[self.search_tool],
             system_instruction=self.system_prompt
@@ -122,20 +121,47 @@ Keep your spoken responses short and friendly. Always respond in the same langua
             print(error_message)
             return {"action_plan": {}, "response": "I'm sorry, something went wrong.", "log": error_message}
 
-    async def stream_conversation(self, audio_stream):
-        """ Handles a streaming voice conversation. """
-        # (Conceptual implementation remains the same)
+    async def process_audio_input(self, audio_bytes: bytes) -> dict:
+        """Processes a complete audio recording."""
+        log_messages = ["Received audio file, sending to Gemini for processing..."]
         try:
-            yield {"type": "interim_transcript", "data": "(Simulating voice input...)"}
-            await asyncio.sleep(1)
-            user_input = "walk forward"
-            yield {"type": "final_transcript", "data": user_input}
-            
-            # In a real implementation, the logic from process_command would be adapted here for streaming.
-            result = await self.process_command(user_input)
+            # The model can take audio and text in the same prompt
+            response = await self.model.generate_content_async([
+                "Transcribe the user's command from this audio and execute it.", 
+                {"mime_type": "audio/webm", "data": audio_bytes}
+            ])
 
-            yield {"type": "action", "data": result['action_plan']}
-            yield {"type": "log", "data": result['log']}
+            # The rest of this logic is similar to process_command
+            function_call = response.candidates[0].content.parts[0].function_call
+
+            if function_call.name:
+                if function_call.name == "web_search":
+                    query = function_call.args['query']
+                    log_messages.append(f"AI wants to search for: {query}")
+                    search_results = self.web_search(query=query)
+                    log_messages.append("Web search executed.")
+                    response = await self.model.generate_content_async(
+                        content={"parts": [{"function_response": {"name": "web_search", "response": {"results": search_results}}}]}
+                    )
+                else:
+                    raise ValueError(f"Unknown function call: {function_call.name}")
+
+            cleaned_response_text = response.candidates[0].content.parts[0].text.strip()
+            json_start = cleaned_response_text.find('{')
+            json_end = cleaned_response_text.rfind('}') + 1
+            if json_start == -1 or json_end == 0:
+                action_plan = {"movement": None, "face": "speaking", "sound": "speaking", "response": cleaned_response_text}
+            else:
+                json_str = cleaned_response_text[json_start:json_end]
+                action_plan = json.loads(json_str)
+
+            log_messages.append(f"AI Action Plan: {action_plan}")
+            final_log = '\n'.join(log_messages)
+            print(final_log)
+
+            return {"action_plan": action_plan, "response": action_plan.get("response"), "log": final_log}
 
         except Exception as e:
-            yield {"type": "error", "data": f"Error in conversation stream: {e}"}
+            error_message = f"Error processing audio: {e}"
+            print(error_message)
+            return {"action_plan": {}, "response": "I had trouble understanding that.", "log": error_message}

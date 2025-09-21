@@ -1,8 +1,12 @@
-
 import json
 import os
 import time
 import pigpio
+import sys
+import select
+import termios
+import tty
+import copy
 from piservo0.core.calibrable_servo import CalibrableServo
 
 # Define file paths based on the script's location
@@ -172,7 +176,7 @@ def record_new_movement(controller):
     previous_angles = controller.get_current_angles()
 
     while True:
-        command_str = input("\nEnter servo movement command: ").strip()
+        command_str = input("Enter servo movement command: ").strip()
         if not command_str:
             continue
 
@@ -234,15 +238,6 @@ def record_new_movement(controller):
                 return
             else:
                 print("Invalid option.")
-
-
-
-
-
-import sys
-import select
-import termios
-import tty
 
 class NonBlockingKeyboard:
     """A class to handle non-blocking keyboard input."""
@@ -327,13 +322,10 @@ def execute_movement(controller):
     if interrupted:
         print("\nMovement interrupted by user.")
     else:
-        print(f"\nMovement '{selected_name}' finished.")
+        print("\nMovement '{selected_name}' finished.")
     
     time.sleep(1)
     controller.center_all_servos()
-
-
-import copy
 
 def edit_sequence_menu(controller, sequence_to_edit):
     """UI for editing a sequence. Operates on a copy and returns it if saved."""
@@ -477,7 +469,6 @@ def modify_existing_movement(controller):
         # If the user aborted or interrupted, no changes are made
         print(f"No changes were made to '{selected_name}'.")
 
-
 def clear_movement(controller):
     """Handles the UI and logic for clearing a movement sequence."""
     print("\n--- Clear Movement ---")
@@ -507,7 +498,6 @@ def clear_movement(controller):
         print(f"Movement '{selected_name}' has been deleted.")
     else:
         print("Deletion cancelled.")
-
 
 def main_menu():
     """Displays the main menu and handles user selection."""

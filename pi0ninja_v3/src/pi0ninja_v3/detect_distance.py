@@ -1,5 +1,4 @@
 
-import click
 import pigpio
 import time
 import sys

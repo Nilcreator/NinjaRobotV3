@@ -28,46 +28,42 @@ The web interface features a conversational AI agent powered by Google's Gemini 
 Once the key is set, the chat interface will appear.
 
 -   **Voice Input (Recommended)**:
-    - Click the **microphone (🎤) button** to start and stop recording.
-    - **IMPORTANT**: For the microphone to work, your browser requires a secure (HTTPS) connection to the robot. If you are accessing the robot via a standard `http://` address, the microphone button will be disabled or show an alert. For testing, a tool like `ngrok` can provide a temporary HTTPS address for your local server.
-    - When listening is active, the button will change appearance and the input box will say "Listening...".
-    - Speak your command, and click the button again to stop. The robot will process what you said.
+    - Click the **microphone (🎤) button** to start recording. It will turn red.
+    - Speak your command.
+    - Click the **microphone (🎤) button** again to stop. It will turn yellow while the robot thinks.
+    - The robot will then respond and perform the action.
 
 -   **Text Input**: You can always type a command in the chat box and press Enter or click Send. This works over both HTTP and HTTPS.
 
 -   **System Log**: This box shows the AI's "thought process," including when it performs a web search or what physical actions it decides to take.
 
-### 3. Enabling Voice Input with HTTPS (ngrok)
+### 3. Enabling Voice Input with HTTPS (Automated with ngrok)
 
-For security reasons, web browsers only allow microphone access on pages loaded over a secure `https://` connection. To use the voice input feature, you need to create a secure tunnel to your robot's web server using a free tool called `ngrok`.
+For security reasons, web browsers only allow microphone access on pages loaded over a secure `https://` connection. To make this seamless, the NinjaRobot web server now automatically uses a free tool called `ngrok` to create a secure tunnel for you.
 
-**Step 1: Install and Configure ngrok**
+**Step 1: First-Time Setup**
+
+The first time you use the robot, you may need to set up `ngrok`.
 
 1.  **Sign Up**: Go to the [ngrok dashboard](https://dashboard.ngrok.com/signup) and create a free account.
-2.  **Download**: Download the ngrok client for Linux.
-3.  **Unzip**: Open a terminal and unzip the downloaded file:
-    ```bash
-    unzip /path/to/ngrok-v3-stable-linux-arm64.zip
-    ```
-4.  **Add Authtoken**: Connect your ngrok agent to your account. Copy the authtoken from your ngrok dashboard and run this command (replace `<YOUR_AUTHTOKEN>` with your actual token):
+2.  **Download**: The `ngrok` executable should be downloaded for you, but if not, you can get it from the dashboard.
+3.  **Add Authtoken**: You must connect `ngrok` to your account. Copy the authtoken from your ngrok dashboard and run this command in the `NinjaRobotV3` directory (replace `<YOUR_AUTHTOKEN>` with your actual token):
     ```bash
     ./ngrok config add-authtoken <YOUR_AUTHTOKEN>
     ```
 
-**Step 2: Start the Secure Tunnel**
+**Step 2: Start the Server and Get the URL**
 
-1.  **Run the NinjaRobot Web Server**: First, make sure your robot's web server is running. The default port is `8000`.
+1.  **Run the NinjaRobot Web Server**:
     ```bash
     uv run web-server
     ```
-2.  **Start ngrok**: In a **new terminal window**, start ngrok to expose your local port `8000`.
-    ```bash
-    ./ngrok http 8000
+2.  **Find Your HTTPS URL**: When the server starts, it will automatically launch `ngrok`. Look for a line in the terminal output like this:
     ```
-3.  **Get Your HTTPS URL**: ngrok will display a "Forwarding" URL that looks something like this:
-    `https://<random-string>.ngrok-free.app`
+    - For Voice (HTTPS): https://<random-string>.ngrok-free.app
+    ```
 
-    Use this `https://` URL in your browser to access the robot's control panel. The microphone button for voice input will now be enabled.
+Use this `https://` URL in your browser to access the robot's control panel. The microphone button for voice input will now be enabled automatically.
 
 (Example Interactions remain the same)
 
