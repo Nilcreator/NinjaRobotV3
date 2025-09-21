@@ -184,4 +184,87 @@ After assembly and software installation, it's a good idea to test each part to 
     ```
     Refer to the hardware table to get the pin number for each servo.
 
-**Congratulations!** If all the tests worked, your NinjaRobot is fully built and ready for action. To learn how to start the main web control interface and talk to your robot's AI, please read the **`NinjaUserGuide.md`**.
+---
+
+## 5. Bringing Your Robot to Life: The Web Interface
+
+This is the most exciting part! You will now start the main web server that lets you control your robot from a browser and talk to its AI brain.
+
+#### **Step 1: Get Your Gemini API Key**
+
+*   **What to do:**
+    1.  Go to Google AI Studio: [https://aistudio.google.com/app/apikey](https://aistudio.google.com/app/apikey)
+    2.  Click "**Create API key**" and copy the long string of letters and numbers. This is your key.
+*   **Why:** The Gemini API Key is like a secret password that allows your robot to connect to Google's powerful AI model. This is what lets your robot understand you and talk back.
+
+#### **Step 2: Set Up the Secure Tunnel (One-Time Setup)**
+
+*   **What to do:** For your browser's microphone to work, it needs a secure `https://` connection. We use a tool called `ngrok` for this.
+    1.  Go to the ngrok dashboard and sign up for a free account: [https://dashboard.ngrok.com/signup](https://dashboard.ngrok.com/signup)
+    2.  On your dashboard, find your "**Authtoken**".
+    3.  In your Raspberry Pi terminal, inside the `NinjaRobotV3` folder, run this command, replacing `<YOUR_AUTHTOKEN>` with the token you copied:
+        ```bash
+        ./ngrok config add-authtoken <YOUR_AUTHTOKEN>
+        ```
+*   **Why:** This command securely links the `ngrok` tool on your Pi to your account. You only need to do this once. From now on, the web server will handle `ngrok` automatically.
+
+#### **Step 3: Start the Web Server**
+
+*   **What to do:** In the terminal, from the `NinjaRobotV3` directory, run this command:
+    ```bash
+    uv run web-server
+    ```
+*   **Why:** This command starts the main application. It will initialize all the robot's hardware and start the web interface.
+
+#### **Step 4: Connect and Talk!**
+
+*   **What to do:** When the server starts, look for a line in the terminal output that looks like this:
+    ```
+    - For Voice (HTTPS): https://<random-string>.ngrok-free.app
+    ```
+    1.  Open a web browser on your computer or phone and go to that `https://` URL.
+    2.  The first time you open it, a popup will ask for your Gemini API Key. Paste the key you got in Step 1.
+    3.  The interface will load. Click the microphone icon to start talking to your robot!
+*   **Why:** Using the secure `https://` link is essential. It proves to your browser that the connection is safe, which is a requirement for allowing microphone access.
+
+---
+
+## 6. Advanced Fun: Recording Your Own Movements
+
+You can teach your robot custom dance moves or gestures! The `movement-recorder` tool lets you create sequences of servo movements and save them.
+
+#### **Step 1: Start the Recorder**
+
+*   **What to do:** In the terminal, from the `NinjaRobotV3` directory, run:
+    ```bash
+    uv run movement-recorder
+    ```
+*   **Why:** This starts the interactive tool for recording and playing back movements.
+
+#### **Step 2: Understanding the Command Language**
+
+When you record a new movement, you tell the servos where to go using a simple command string.
+
+*   **The Format:** `[PIN_NUMBER]:[ANGLE]`
+*   You can command multiple servos at once by separating them with a `/`.
+    *   Example: `17:45/27:-45` (Move servo on pin 17 to 45 degrees AND servo on pin 27 to -45 degrees).
+*   **Special Angle Shortcuts:**
+    *   `C`: Center (0 degrees)
+    *   `M`: Minimum angle (usually -90 degrees)
+    *   `X`: Maximum angle (usually 90 degrees)
+    *   Example: `22:C/5:C` (Center the two foot servos).
+*   **Setting Speed:** You can add a speed prefix to a command.
+    *   `S_`: Slow (takes 1 second)
+    *   `M_`: Medium (takes 0.5 seconds) (This is the default if you don't specify)
+    *   `F_`: Fast (takes 0.2 seconds)
+    *   Example: `S_17:90/27:90` (Slowly move both leg servos to 90 degrees).
+
+#### **Step 3: Using the Tool**
+
+The tool has a simple menu:
+1.  **Record new movement:** This will guide you step-by-step. You enter a command, see the robot move, and then choose to `Confirm & Next`, `Reset` the step, or `Finish Recording`. When you finish, you'll give the movement a name.
+2.  **Modify existing movement:** Lets you edit a saved sequence.
+3.  **Execute a movement:** Choose a saved movement and watch the robot perform it! You can even make it loop.
+4.  **Clear movement:** Delete a saved movement.
+
+**Congratulations!** If all the tests worked, your NinjaRobot is fully built and ready for action. For more detailed information on using the web interface, please read the **`NinjaUserGuide.md`**.
