@@ -138,9 +138,9 @@ Now let's get the robot's brain ready by installing its software. Follow these s
 
 *   **What to do:** This is the final software installation step. Make sure you are in the `NinjaRobotV3` directory and run this command:
     ```bash
-    source /home/rogerchang/.cargo/env && uv pip install -e ./pi0ninja_v3 -e ./piservo0 -e ./pi0disp -e ./vl53l0x_pigpio -e ./pi0buzzer
+    uv pip install -e ./pi0ninja_v3 -e ./piservo0 -e ./pi0disp -e ./vl53l0x_pigpio -e ./pi0buzzer
     ```
-*   **Why:** This command uses `uv` to install all the different software drivers for the robot's parts (the main controller, servos, display, sensor, and buzzer). The `-e` flag installs them in "editable" mode, which means if you decide to change the code later, your changes will be used immediately.
+*   **Why:** This command uses `uv` to install all the different software drivers for the robot's parts (the main controller, servos, display, sensor, and buzzer). The `-e` flag installs them in "editable" mode, which means if you decide to change the code later, your changes will be used immediately. If you get a `uv: command not found` error, try restarting your terminal or running `source ~/.profile` first.
 
 ---
 

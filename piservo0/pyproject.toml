@@ -1,6 +1,6 @@
 [project]
 name = "piservo0"
-dynamic = ["version"]
+version = "0.1.0"
 description = "Python library for servo motor control."
 readme = "README.md"
 authors = [
@@ -17,11 +17,8 @@ dependencies = [
 ]
 
 [build-system]
-requires = ["hatchling", "hatch-vcs"]
+requires = ["hatchling"]
 build-backend = "hatchling.build"
-
-[tool.hatch.version]
-source = "vcs"
 
 [project.scripts]
 piservo0 = "piservo0.__main__:cli"
@@ -55,4 +52,3 @@ samples = [
 [[tool.mypy.overrides]]
 module = ['pigpio', 'fastapi', 'requests']
 ignore_missing_imports = true
-
