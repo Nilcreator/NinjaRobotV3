@@ -134,9 +134,18 @@ Now let's get the robot's brain ready by installing its software. Follow these s
     ```
 *   **Why:** The first command uses `git` to copy the entire NinjaRobotV3 project from GitHub to your Raspberry Pi. The second command moves you inside the project folder you just downloaded.
 
-#### **Step 7: Install the Robot's Python Libraries**
+#### **Step 7: Create and Activate Virtual Environment**
 
-*   **What to do:** This is the final software installation step. Make sure you are in the `NinjaRobotV3` directory and run this command:
+*   **What to do:** Before installing the robot's specific software, we need to create an isolated environment for it. Run these two commands:
+    ```bash
+    uv venv
+    source .venv/bin/activate
+    ```
+*   **Why:** This is a crucial step in modern Python development. It creates a self-contained "bubble" (a virtual environment) for our project. All the software libraries we install in the next step will go into this bubble, preventing them from interfering with any other Python projects on your system. The `source` command "activates" the bubble, so your terminal will use it for all subsequent commands. You'll know it's active because your command prompt will change to show `(.venv)`.
+
+#### **Step 8: Install the Robot's Python Libraries**
+
+*   **What to do:** Now that you are inside the virtual environment, you can safely install the robot's drivers. Make sure you are in the `NinjaRobotV3` directory and run this command:
     ```bash
     uv pip install -e ./pi0ninja_v3 -e ./piservo0 -e ./pi0disp -e ./vl53l0x_pigpio -e ./pi0buzzer
     ```
@@ -146,21 +155,25 @@ Now let's get the robot's brain ready by installing its software. Follow these s
 
 ## 4. User Guide: Testing Your Robot
 
-After assembly and software installation, it's a good idea to test each part to make sure everything is working correctly. Run these commands from the `NinjaRobotV3` directory in your terminal.
+After assembly and software installation, it's a good idea to test each part to make sure everything is working correctly. Run these commands from the `NinjaRobotV3` directory in your terminal. Remember to activate your virtual environment first (`source .venv/bin/activate`) if it's not already active.
 
 #### **Test 1: The Buzzer (Voice Box)**
 
-*   **What to do:** Let's test the buzzer. This command tells the robot that the buzzer is on pin 26.
+*   **What to do:** First, let's tell the robot which pin the buzzer is connected to. This will create a configuration file.
     ```bash
     uv run pi0buzzer init 26
     ```
-*   **What to expect:** You should hear a short "Hello World" sound. If you do, it's working!
+    Now, let's make a sound. This command will play a standard A4 note (440 Hz) for half a second.
+    ```bash
+    uv run pi0buzzer beep
+    ```
+*   **What to expect:** You should hear a clear, half-second beep. If you do, it's working!
 
 #### **Test 2: The Display (Face)**
 
-*   **What to do:** Now for the face. This command runs a performance test.
+*   **What to do:** Now for the face. This command runs an animation performance test.
     ```bash
-    uv run pi0disp test
+    uv run pi0disp ball_anime
     ```
 *   **What to expect:** You should see animated, colorful balls bouncing around on the screen. If you see them, your display is working! Press `Ctrl` + `C` on your keyboard to stop the test.
 
@@ -174,15 +187,15 @@ After assembly and software installation, it's a good idea to test each part to 
 
 #### **Test 4: The Servos (Muscles)**
 
-*   **What to do:** Let's test one of the leg motors. This command tells the servo on pin 17 (the left leg) to move to the 0-degree (center) position.
+*   **What to do:** Let's test one of the leg motors. This command tells the servo on pin 17 (the left leg) to move to its center position by sending it a raw pulse signal of `1500`.
     ```bash
-    uv run piservo0 servo 17 0
+    uv run piservo0 servo 17 1500
     ```
-*   **What to expect:** You should see the left leg servo move. You can test the other servos by changing the pin number and the angle. For example, to test the right leg (pin 27) and move it to 45 degrees, you would run:
+*   **What to expect:** You should see the left leg servo move to its middle position. You can test the other servos by changing the pin number. For example, to test the right leg (pin 27), you would run:
     ```bash
-    uv run piservo0 servo 27 45
+    uv run piservo0 servo 27 1500
     ```
-    Refer to the hardware table to get the pin number for each servo.
+    Refer to the hardware table to get the pin number for each servo. Using `1500` should generally move any servo to its center.
 
 ---
 
