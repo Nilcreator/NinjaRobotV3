@@ -14,6 +14,17 @@ This installs all necessary local packages in editable mode.
 
 ## Development History
 
+### 2025-09-23: Voice Input Feature Removal
+
+- **Change**: The live voice input feature has been completely removed from the project.
+- **Reason**: To simplify the user interface and core functionality, focusing on the text-based chat experience.
+- **Impact**:
+    - The `ninja_agent` has been updated to only process text commands.
+    - The `/ws/voice` WebSocket endpoint and all related backend code have been removed.
+    - The microphone button and all associated JavaScript have been removed from the frontend.
+    - All documentation has been updated to reflect the removal of this feature.
+    - The `pyngrok` integration is preserved to provide a reliable, secure HTTPS tunnel to the web interface, but is no longer a requirement for the primary AI functionality.
+
 ### 2025-09-23: Architectural Change: Ngrok Integration Refactored to `pyngrok`
 
 - **Problem**: The automated `ngrok` startup was unreliable, failing with `Connection refused` errors. The manual `subprocess` management approach was brittle and difficult to debug.

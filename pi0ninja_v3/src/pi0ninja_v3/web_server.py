@@ -236,36 +236,6 @@ async def websocket_distance_endpoint(websocket: WebSocket):
     except WebSocketDisconnect:
         print("Client disconnected from distance websocket")
 
-@app.websocket("/ws/voice")
-async def websocket_voice_endpoint(websocket: WebSocket):
-    await websocket.accept()
-    agent = websocket.app.state.ninja_agent
-    if not agent:
-        await websocket.send_json({"type": "error", "data": "Agent not activated."})
-        await websocket.close(code=1011)
-        return
-
-    try:
-        while True:
-            audio_bytes = await websocket.receive_bytes()
-            await websocket.send_json({"type": "log", "data": "Audio received, processing..."})
-            result = await agent.process_audio_input(audio_bytes)
-            if "action_plan" in result and result["action_plan"]:
-                asyncio.create_task(execute_robot_actions(result["action_plan"], websocket.app.state.controllers))
-                await websocket.send_json({"type": "action", "data": result["action_plan"]})
-            
-            await websocket.send_json({"type": "response", "data": result.get("response")})
-            await websocket.send_json({"type": "log", "data": result.get("log")})
-
-    except WebSocketDisconnect:
-        print("Client disconnected from voice websocket")
-    except Exception as e:
-        error_msg = f"Error in voice websocket: {e}"
-        print(error_msg)
-        await websocket.send_json({"type": "error", "data": error_msg})
-    finally:
-        print("Closing voice websocket connection.")
-
 def main():
     port = 8000
     host = "0.0.0.0"
@@ -292,7 +262,7 @@ def main():
     print("--- NinjaRobot Web Server is starting! ---")
     print(f"Connect from a browser on the same network:\n  - By Hostname:  http://{hostname}.local:{port}\n  - By IP Address: http://{ip_address}:{port}")
     if public_url:
-        print(f"  - For Voice (HTTPS): {public_url}")
+        print(f"  - Secure Public URL (HTTPS): {public_url}")
     print("\nWaiting for application startup... (Press CTRL+C to quit)")
 
     uvicorn.run("pi0ninja_v3.web_server:app", host=host, port=port, reload=True, log_level="warning")

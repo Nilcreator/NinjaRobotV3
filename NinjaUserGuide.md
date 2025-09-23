@@ -1,4 +1,3 @@
-
 # NinjaRobotV3 User Guide
 
 (Sections 1-2.4 remain the same)
@@ -13,10 +12,10 @@
 
 #### Ninja AI Agent
 
-The web interface features a conversational AI agent powered by Google's Gemini model. You can talk to the robot in natural language, and it will interpret your intent, perform actions, and answer questions.
+The web interface features a conversational AI agent powered by Google's Gemini model. You can type commands in natural language, and it will interpret your intent, perform actions, and answer questions.
 
 **Capabilities:**
-- **Live Voice Chat**: Speak to the robot in real-time.
+- **Text-Based Chat**: Type commands to the robot in real-time.
 - **Web Search**: The agent can search the internet to answer questions.
 
 **1. Activating the AI Agent**
@@ -27,23 +26,17 @@ The web interface features a conversational AI agent powered by Google's Gemini 
 
 Once the key is set, the chat interface will appear.
 
--   **Voice Input (Recommended)**:
-    - Click the **microphone (🎤) button** to start recording. It will turn red.
-    - Speak your command.
-    - Click the **microphone (🎤) button** again to stop. It will turn yellow while the robot thinks.
-    - The robot will then respond and perform the action.
-
--   **Text Input**: You can always type a command in the chat box and press Enter or click Send. This works over both HTTP and HTTPS.
+-   **Text Input**: Type a command in the chat box and press Enter or click the "Send" button.
 
 -   **System Log**: This box shows the AI's "thought process," including when it performs a web search or what physical actions it decides to take.
 
-### 3. Enabling Voice Input with HTTPS (Automated with ngrok)
+### 3. Accessing the Robot Remotely (Optional)
 
-For security reasons, web browsers only allow microphone access on pages loaded over a secure `https://` connection. To make this seamless, the NinjaRobot web server automatically uses a free tool called `ngrok` to create a secure tunnel for you.
+The web server automatically uses a tool called `ngrok` to create a secure, public URL for your robot's control panel. This is useful if you want to control your robot from a device that is not on the same local network.
 
-**Step 1: First-Time Setup**
+**Step 1: First-Time Setup (One-Time Only)**
 
-The very first time you use the robot, you need to link `ngrok` to a free account. You only have to do this once.
+To enable this feature, you need to link `ngrok` to a free account.
 
 1.  **Sign Up**: Go to the [ngrok dashboard](https://dashboard.ngrok.com/signup) and create a free account.
 2.  **Add Authtoken**: Copy the authtoken from your ngrok dashboard and run this command in the `NinjaRobotV3` directory (replace `<YOUR_AUTHTOKEN>` with your actual token):
@@ -53,18 +46,18 @@ The very first time you use the robot, you need to link `ngrok` to a free accoun
 
 **Step 2: Start the Server and Get the URL**
 
-That's it for setup! Now, just start the server.
+Now, just start the server as usual.
 
 1.  **Run the NinjaRobot Web Server**:
     ```bash
     uv run web-server
     ```
-2.  **Find Your HTTPS URL**: When the server starts, it will automatically launch `ngrok`. Look for a line in the terminal output like this:
+2.  **Find Your Public URL**: When the server starts, look for a line in the terminal output like this:
     ```
-    - For Voice (HTTPS): https://<random-string>.ngrok-free.app
+    - Secure Public URL (HTTPS): https://<random-string>.ngrok-free.app
     ```
 
-Use this `https://` URL in your browser to access the robot's control panel. The microphone button for voice input will now be enabled and ready to use.
+You can use this `https://` URL in any browser to access the robot's control panel from anywhere.
 
 (Example Interactions remain the same)
 

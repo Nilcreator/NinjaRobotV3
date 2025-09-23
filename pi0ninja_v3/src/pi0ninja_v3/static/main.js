@@ -1,4 +1,3 @@
-
 document.addEventListener('DOMContentLoaded', () => {
     // --- Element Selectors ---
     const movementsSelect = document.getElementById('movements-select');
@@ -14,13 +13,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const chatHistory = document.getElementById('chat-history');
     const chatInput = document.getElementById('chat-input');
     const chatSendBtn = document.getElementById('chat-send-btn');
-    const micBtn = document.getElementById('mic-btn');
     const systemLog = document.getElementById('system-log');
-
-    // --- State Variables ---
-    let mediaRecorder;
-    let voiceSocket;
-    let isListening = false;
 
     // --- Generic API Call Functions ---
     async function fetchApi(endpoint, options = {}) {
@@ -70,83 +63,10 @@ document.addEventListener('DOMContentLoaded', () => {
             setApiKeyBtn.style.display = 'none';
             chatContainer.style.display = 'block';
             logControls.style.display = 'block';
-            connectVoiceSocket();
         } else {
             setApiKeyBtn.style.display = 'block';
             chatContainer.style.display = 'none';
             logControls.style.display = 'none';
-        }
-    }
-
-    // --- Voice Streaming Logic ---
-    function connectVoiceSocket() {
-        const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-        voiceSocket = new WebSocket(`${wsProtocol}//${window.location.host}/ws/voice`);
-
-        voiceSocket.onmessage = (event) => {
-            const message = JSON.parse(event.data);
-            switch (message.type) {
-                case 'action':
-                    // The main response text is now part of the action plan
-                    if (message.data.response) {
-                        appendMessage('agent', message.data.response);
-                    }
-                    micBtn.classList.remove('processing');
-                    chatInput.placeholder = 'Ask the robot to do something...';
-                    break;
-                case 'response': // This may contain supplemental text
-                    if(message.data) appendMessage('agent', message.data);
-                    break;
-                case 'log':
-                    appendLog(message.data);
-                    break;
-                case 'error':
-                    appendMessage('system-error', message.data);
-                    micBtn.classList.remove('processing');
-                    chatInput.placeholder = 'Ask the robot to do something...';
-                    break;
-            }
-        };
-
-        voiceSocket.onerror = (err) => console.error('Voice WebSocket Error:', err);
-        voiceSocket.onclose = () => console.log('Voice WebSocket closed.');
-    }
-
-    async function startListening() {
-        if (isListening) return;
-        if (window.location.protocol !== 'https:' && window.location.hostname !== 'localhost') {
-            alert('Microphone access requires a secure (HTTPS) connection. This feature is disabled on HTTP.');
-            return;
-        }
-        try {
-            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-            mediaRecorder = new MediaRecorder(stream);
-            mediaRecorder.ondataavailable = (event) => {
-                if (event.data.size > 0 && voiceSocket && voiceSocket.readyState === WebSocket.OPEN) {
-                    voiceSocket.send(event.data);
-                }
-            };
-            mediaRecorder.onstart = () => {
-                isListening = true;
-                micBtn.classList.add('listening');
-                chatInput.placeholder = 'Listening... Press mic again to stop.';
-            };
-            mediaRecorder.onstop = () => {
-                isListening = false;
-                micBtn.classList.remove('listening');
-                chatInput.placeholder = 'Ask the robot to do something...';
-                stream.getTracks().forEach(track => track.stop());
-            };
-            mediaRecorder.start(250);
-        } catch (err) {
-            console.error("Error accessing microphone:", err);
-            appendMessage('system-error', `Could not access microphone: ${err.name}. Ensure you have granted permission and are on a secure (HTTPS) connection.`);
-        }
-    }
-
-    function stopListening() {
-        if (mediaRecorder && isListening) {
-            mediaRecorder.stop();
         }
     }
 
@@ -194,14 +114,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     chatSendBtn.addEventListener('click', handleChatSend);
     chatInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') handleChatSend(); });
-
-    micBtn.addEventListener('click', () => {
-        if (isListening) {
-            stopListening();
-        } else {
-            startListening();
-        }
-    });
 
     // --- Initialization ---
     async function init() {
