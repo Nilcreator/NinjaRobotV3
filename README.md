@@ -14,6 +14,34 @@ This installs all necessary local packages in editable mode.
 
 ## Development History
 
+### 2025-09-23: Voice Input Upload Fix
+
+- **Problem**: The voice input feature failed with an error indicating the uploaded file processing had `FAILED`.
+- **Root Cause**: The Gemini API was rejecting the uploaded audio file because its type was not explicitly specified. Although the file was a standard `.webm`, the API requires the MIME type for reliable processing.
+- **Solution**: Modified `ninja_agent.py` to explicitly set `mime_type="audio/webm"` in the `genai.upload_file()` call. This ensures the API correctly identifies and processes the audio file, resolving the upload failure.
+
+### 2025-09-23: Voice Input Robustness Fix
+
+- **Problem**: The voice input feature failed with a `400 Bad Request` error, stating the uploaded audio file was "not in an ACTIVE state."
+- **Root Cause**: A timing issue where the application was sending the uploaded audio file to the Gemini model for processing before the API had finished preparing it.
+- **Solution**: Implemented a robust waiting mechanism in `ninja_agent.py`. The code now uploads the file, then polls the Gemini API, waiting until the file's status is 'ACTIVE' before sending it to the model. This includes a timeout to prevent indefinite waiting and ensures the temporary file is deleted, resolving the error and making the voice feature reliable.
+
+### 2025-09-23: Environment Sync Fix
+
+- **Problem**: The web server failed to start with a `RuntimeError`, indicating the `python-multipart` dependency was not installed.
+- **Root Cause**: The project's virtual environment was out of sync with the `pyproject.toml` file, which already specified the dependency correctly.
+- **Solution**: Re-ran the `uv pip install` command to synchronize the environment and install the missing package. This resolves the startup error.
+
+### 2025-09-23: Voice Input Feature Re-instated
+
+- **Change**: A "record-then-process" voice input feature has been added to the web interface.
+- **Reason**: To provide an alternative, hands-free method for sending commands to the robot, as requested. This implementation differs from the previous live streaming approach.
+- **Implementation**:
+    - **Frontend**: A microphone button was added. It uses the `MediaRecorder` and Web Audio APIs to record user speech, automatically stopping on silence (3s) or after a maximum duration (30s).
+    - **Backend**: A new endpoint (`/api/agent/chat_voice`) accepts the recorded audio file. The `NinjaAgent` uses the Gemini API's multimodal capabilities to transcribe the audio and execute the command.
+- **Linting**: Added `ruff` as a development dependency to `pi0ninja_v3` to ensure code quality for new backend changes.
+
+
 ### 2025-09-23: Voice Input Feature Removal
 
 - **Change**: The live voice input feature has been completely removed from the project.
