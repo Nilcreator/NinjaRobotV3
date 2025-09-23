@@ -16,10 +16,16 @@ dependencies = [
     "websockets",
     "googlesearch-python",
     "pyngrok",
+    "python-multipart",
 ]
 
 [project.scripts]
 web-server = "pi0ninja_v3.web_server:main"
+
+[project.optional-dependencies]
+dev = [
+    "ruff",
+]
 
 
 [build-system]

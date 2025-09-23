@@ -41,6 +41,17 @@ Before explaining functionality, generating documentation, or modifying code, yo
 - **Verification Before Statement**: Never assume a class or function exists. Always use the `read_file` tool to verify its presence and content before discussing it.
 - **Accurate Understanding**: Base all explanations and documentation strictly on the verified source code.
 
+### Step 3.5: Linting
+
+After any code modification, run the project's linter to ensure code quality.
+
+- **Execution**: Run `uv run ruff check <file_path>`.
+- **Contingency for Missing Linter**: If `ruff` is not found, you must:
+    1.  Modify the package's `pyproject.toml` to add `ruff` as a development dependency under `[project.optional-dependencies]`.
+    2.  Install the new dependency by running `uv pip install -e ./<package_name>[dev]`.
+    3.  Re-run the linting command to verify the changes.
+    4.  Do not proceed to the next step until linting passes.
+
 ### Step 4: Update the development progress
 End by updating the current state of the project in **`README.md`**. 
 - If there is any fixed of the code or fuction, replace it directly.

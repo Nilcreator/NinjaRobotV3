@@ -16,6 +16,7 @@ The web interface features a conversational AI agent powered by Google's Gemini 
 
 **Capabilities:**
 - **Text-Based Chat**: Type commands to the robot in real-time.
+- **Voice Input**: Speak commands to the robot using your microphone.
 - **Web Search**: The agent can search the internet to answer questions.
 
 **1. Activating the AI Agent**
@@ -27,6 +28,8 @@ The web interface features a conversational AI agent powered by Google's Gemini 
 Once the key is set, the chat interface will appear.
 
 -   **Text Input**: Type a command in the chat box and press Enter or click the "Send" button.
+
+-   **Voice Input**: Click the microphone button (🎤) to start recording. The button will turn red. Speak your command. The recording will stop automatically after 3 seconds of silence or manually if you click the button again. The button will turn green, and your voice command will be sent to the robot. Note: Your browser will ask for microphone permission the first time.
 
 -   **System Log**: This box shows the AI's "thought process," including when it performs a web search or what physical actions it decides to take.
 

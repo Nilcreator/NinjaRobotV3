@@ -5,10 +5,12 @@ import os
 import pigpio
 import inspect
 import time
+import shutil
+import tempfile
 from contextlib import asynccontextmanager
 import asyncio
 from pyngrok import ngrok
-from fastapi import FastAPI, APIRouter, Request, HTTPException, WebSocket, WebSocketDisconnect
+from fastapi import FastAPI, APIRouter, Request, HTTPException, WebSocket, WebSocketDisconnect, UploadFile, File
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
@@ -152,6 +154,36 @@ async def agent_chat(payload: AgentChatRequest, request: Request):
         asyncio.create_task(execute_robot_actions(result["action_plan"], request.app.state.controllers))
     return {"response": result.get("response"), "log": result.get("log")}
 
+
+@api_router.post("/agent/chat_voice")
+async def agent_chat_voice(request: Request, audio_file: UploadFile = File(...)):
+    agent = request.app.state.ninja_agent
+    if not agent:
+        raise HTTPException(status_code=400, detail="Agent not active.")
+
+    # Create a temporary file to store the uploaded audio
+    try:
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".webm") as tmp:
+            shutil.copyfileobj(audio_file.file, tmp)
+            tmp_path = tmp.name
+        
+        # Process the audio file
+        result = await agent.process_audio_command(tmp_path)
+        
+        # Schedule robot actions if any
+        if "action_plan" in result and result["action_plan"]:
+            asyncio.create_task(execute_robot_actions(result["action_plan"], request.app.state.controllers))
+            
+        return {"response": result.get("response"), "log": result.get("log")}
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error processing audio file: {e}")
+    finally:
+        # Clean up the temporary file
+        if 'tmp_path' in locals() and os.path.exists(tmp_path):
+            os.unlink(tmp_path)
+        # Ensure the uploaded file is closed
+        await audio_file.close()
 @api_router.get("/servos/movements")
 def get_servo_movements():
     return {"movements": list(load_movements().keys())}
