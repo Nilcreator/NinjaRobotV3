@@ -39,20 +39,21 @@ Once the key is set, the chat interface will appear.
 
 ### 3. Enabling Voice Input with HTTPS (Automated with ngrok)
 
-For security reasons, web browsers only allow microphone access on pages loaded over a secure `https://` connection. To make this seamless, the NinjaRobot web server now automatically uses a free tool called `ngrok` to create a secure tunnel for you.
+For security reasons, web browsers only allow microphone access on pages loaded over a secure `https://` connection. To make this seamless, the NinjaRobot web server automatically uses a free tool called `ngrok` to create a secure tunnel for you.
 
 **Step 1: First-Time Setup**
 
-The first time you use the robot, you may need to set up `ngrok`.
+The very first time you use the robot, you need to link `ngrok` to a free account. You only have to do this once.
 
 1.  **Sign Up**: Go to the [ngrok dashboard](https://dashboard.ngrok.com/signup) and create a free account.
-2.  **Download**: The `ngrok` executable should be downloaded for you, but if not, you can get it from the dashboard.
-3.  **Add Authtoken**: You must connect `ngrok` to your account. Copy the authtoken from your ngrok dashboard and run this command in the `NinjaRobotV3` directory (replace `<YOUR_AUTHTOKEN>` with your actual token):
+2.  **Add Authtoken**: Copy the authtoken from your ngrok dashboard and run this command in the `NinjaRobotV3` directory (replace `<YOUR_AUTHTOKEN>` with your actual token):
     ```bash
     ./ngrok config add-authtoken <YOUR_AUTHTOKEN>
     ```
 
 **Step 2: Start the Server and Get the URL**
+
+That's it for setup! Now, just start the server.
 
 1.  **Run the NinjaRobot Web Server**:
     ```bash
@@ -63,7 +64,7 @@ The first time you use the robot, you may need to set up `ngrok`.
     - For Voice (HTTPS): https://<random-string>.ngrok-free.app
     ```
 
-Use this `https://` URL in your browser to access the robot's control panel. The microphone button for voice input will now be enabled automatically.
+Use this `https://` URL in your browser to access the robot's control panel. The microphone button for voice input will now be enabled and ready to use.
 
 (Example Interactions remain the same)
 

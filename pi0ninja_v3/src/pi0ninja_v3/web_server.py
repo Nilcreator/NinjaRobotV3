@@ -7,9 +7,7 @@ import inspect
 import time
 from contextlib import asynccontextmanager
 import asyncio
-import subprocess
-import atexit
-import requests
+from pyngrok import ngrok
 from fastapi import FastAPI, APIRouter, Request, HTTPException, WebSocket, WebSocketDisconnect
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
@@ -30,7 +28,6 @@ from pi0ninja_v3.ninja_agent import NinjaAgent
 NINJA_ROBOT_V3_ROOT = "/home/rogerchang/NinjaRobotV3"
 BUZZER_CONFIG_FILE = os.path.join(NINJA_ROBOT_V3_ROOT, "buzzer.json")
 DOTENV_PATH = os.path.join(NINJA_ROBOT_V3_ROOT, ".env")
-NGROK_PROC = None
 
 base_dir = os.path.dirname(os.path.abspath(__file__))
 controllers = {}
@@ -44,40 +41,6 @@ class AgentChatRequest(BaseModel):
     message: str
 
 # --- Ngrok and Hardware Lifecycle Management ---
-def start_ngrok(port: int):
-    """Starts ngrok as a subprocess."""
-    global NGROK_PROC
-    print("Starting ngrok tunnel...")
-    ngrok_path = os.path.join(NINJA_ROBOT_V3_ROOT, "ngrok")
-    if not os.path.exists(ngrok_path):
-        print("Warning: ngrok executable not found. Cannot create secure tunnel.")
-        return
-    
-    NGROK_PROC = subprocess.Popen([ngrok_path, "http", str(port)], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    atexit.register(stop_ngrok)
-    time.sleep(2) # Give ngrok time to initialize
-
-def stop_ngrok():
-    """Stops the ngrok subprocess if it is running."""
-    global NGROK_PROC
-    if NGROK_PROC:
-        print("Stopping ngrok tunnel...")
-        NGROK_PROC.terminate()
-        NGROK_PROC.wait()
-
-def get_ngrok_url():
-    """Fetches the public URL from the local ngrok API."""
-    try:
-        response = requests.get("http://127.0.0.1:4040/api/tunnels")
-        response.raise_for_status()
-        tunnels = response.json().get("tunnels", [])
-        for tunnel in tunnels:
-            if tunnel.get("proto") == "https":
-                return tunnel.get("public_url")
-    except requests.exceptions.RequestException as e:
-        print(f"Could not connect to ngrok API: {e}. Is ngrok running?")
-    return None
-
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     print("Initializing hardware controllers...")
@@ -114,7 +77,7 @@ async def lifespan(app: FastAPI):
 
     yield
 
-    print("Shutting down hardware controllers...")
+    print("Shutting down hardware controllers and ngrok...")
     if controllers.get("servo"):
         controllers["servo"].cleanup()
     if controllers.get("display"):
@@ -124,6 +87,7 @@ async def lifespan(app: FastAPI):
     if controllers.get("distance_sensor"):
         controllers["distance_sensor"].close()
     pi.stop()
+    ngrok.kill()
 
 # --- Helper function for non-blocking robot actions ---
 async def execute_robot_actions(action_plan: dict, app_controllers: dict):
@@ -283,16 +247,9 @@ async def websocket_voice_endpoint(websocket: WebSocket):
 
     try:
         while True:
-            # Receive the complete audio file as bytes
             audio_bytes = await websocket.receive_bytes()
-            
-            # Notify the client that processing has started
             await websocket.send_json({"type": "log", "data": "Audio received, processing..."})
-
-            # Process the audio
             result = await agent.process_audio_input(audio_bytes)
-
-            # Send action and response back to the client
             if "action_plan" in result and result["action_plan"]:
                 asyncio.create_task(execute_robot_actions(result["action_plan"], websocket.app.state.controllers))
                 await websocket.send_json({"type": "action", "data": result["action_plan"]})
@@ -313,9 +270,14 @@ def main():
     port = 8000
     host = "0.0.0.0"
     
-    # Start ngrok and get the public URL
-    start_ngrok(port)
-    ngrok_url = get_ngrok_url()
+    # Set up ngrok tunnel
+    try:
+        # pyngrok will automatically find the ngrok executable and use the auth token from the config file
+        public_url = ngrok.connect(port, "http").public_url
+        print(f"  - For Voice (HTTPS): {public_url}")
+    except Exception as e:
+        print(f"Could not start ngrok. Please ensure it is configured correctly. Error: {e}")
+        public_url = None
 
     hostname = socket.gethostname()
     try:
@@ -329,8 +291,8 @@ def main():
 
     print("--- NinjaRobot Web Server is starting! ---")
     print(f"Connect from a browser on the same network:\n  - By Hostname:  http://{hostname}.local:{port}\n  - By IP Address: http://{ip_address}:{port}")
-    if ngrok_url:
-        print(f"  - For Voice (HTTPS): {ngrok_url}")
+    if public_url:
+        print(f"  - For Voice (HTTPS): {public_url}")
     print("\nWaiting for application startup... (Press CTRL+C to quit)")
 
     uvicorn.run("pi0ninja_v3.web_server:app", host=host, port=port, reload=True, log_level="warning")

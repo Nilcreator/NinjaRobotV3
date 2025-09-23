@@ -14,6 +14,18 @@ This installs all necessary local packages in editable mode.
 
 ## Development History
 
+### 2025-09-23: Architectural Change: Ngrok Integration Refactored to `pyngrok`
+
+- **Problem**: The automated `ngrok` startup was unreliable, failing with `Connection refused` errors. The manual `subprocess` management approach was brittle and difficult to debug.
+- **Root Cause**: The `subprocess` approach did not provide robust control over the `ngrok` process lifecycle, leading to race conditions and silent failures.
+- **Solution**: Replaced the entire manual `subprocess` and `requests` implementation with the `pyngrok` library. This is a major architectural improvement that delegates all `ngrok` process management to a dedicated, robust library. `pyngrok` now handles the tunnel creation, URL fetching, and shutdown, resolving the startup failures and making the code cleaner and more reliable. The `pi0ninja_v3` dependencies and the web server startup sequence have been updated accordingly.
+
+### 2025-09-22: Ngrok Automatic Startup Reliability Fix
+
+- **Problem**: The automated `ngrok` secure tunnel failed to activate intermittently upon starting the web server.
+- **Root Cause**: A race condition was identified where the server script attempted to fetch the public URL from the `ngrok` API before the `ngrok` service had fully initialized. The previous static `time.sleep()` was an unreliable solution.
+- **Solution**: Replaced the fixed delay with a robust retry mechanism in the `get_ngrok_url` function. The function now repeatedly attempts to connect to the `ngrok` API for a few seconds, ensuring it only proceeds once the tunnel is active and the URL is available. This makes the automatic HTTPS startup process reliable.
+
 ### 2025-09-21: Voice Agent Re-architecture
 
 - **Problem**: The voice agent was unresponsive because the underlying Gemini library does not support true bidirectional audio streaming. The previous implementation was only a diagnostic placeholder.

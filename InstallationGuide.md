@@ -210,10 +210,10 @@ This is the most exciting part! You will now start the main web server that lets
     2.  Click "**Create API key**" and copy the long string of letters and numbers. This is your key.
 *   **Why:** The Gemini API Key is like a secret password that allows your robot to connect to Google's powerful AI model. This is what lets your robot understand you and talk back.
 
-#### **Step 2: Set Up the Secure Tunnel (One-Time Setup)**
+#### Step 2: Set Up the Secure Tunnel (One-Time Setup)
 
-*   **What to do:** For your browser's microphone to work, it needs a secure `https://` connection. We use a tool called `ngrok` for this.
-    1.  Go to the ngrok dashboard and sign up for a free account: [https://dashboard.ngrok.com/signup](https://dashboard.ngrok.com/signup)
+*   **What to do:** For your browser's microphone to work, it needs a secure `https://` connection. We use a tool called `ngrok` for this, and the web server will run it for you automatically. You only need to perform this one-time setup to link it to your free account.
+    1.  Go to the ngrok dashboard and sign up: [https://dashboard.ngrok.com/signup](https://dashboard.ngrok.com/signup)
     2.  On your dashboard, find your "**Authtoken**".
     3.  In your Raspberry Pi terminal, inside the `NinjaRobotV3` folder, run this command, replacing `<YOUR_AUTHTOKEN>` with the token you copied:
         ```bash
@@ -221,17 +221,17 @@ This is the most exciting part! You will now start the main web server that lets
         ```
 *   **Why:** This command securely links the `ngrok` tool on your Pi to your account. You only need to do this once. From now on, the web server will handle `ngrok` automatically.
 
-#### **Step 3: Start the Web Server**
+#### Step 3: Start the Web Server
 
 *   **What to do:** In the terminal, from the `NinjaRobotV3` directory, run this command:
     ```bash
     uv run web-server
     ```
-*   **Why:** This command starts the main application. It will initialize all the robot's hardware and start the web interface.
+*   **Why:** This command starts the main application. It will initialize all the robot's hardware, automatically start the secure `ngrok` tunnel, and start the web interface.
 
-#### **Step 4: Connect and Talk!**
+#### Step 4: Connect and Talk!
 
-*   **What to do:** When the server starts, look for a line in the terminal output that looks like this:
+*   **What to do:** When the server starts, it will automatically create the secure tunnel. Look for a line in the terminal output that looks like this:
     ```
     - For Voice (HTTPS): https://<random-string>.ngrok-free.app
     ```

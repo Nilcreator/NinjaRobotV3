@@ -15,6 +15,7 @@ dependencies = [
     "python-dotenv",
     "websockets",
     "googlesearch-python",
+    "pyngrok",
 ]
 
 [project.scripts]
