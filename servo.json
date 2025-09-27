@@ -1,56 +1,50 @@
 [
   {
     "pin": 5,
-    "min": 780,
+    "min": 740,
     "center": 1400,
-    "max": 2420
+    "max": 2400
   },
   {
     "pin": 17,
-    "min": 900,
-    "center": 1380,
-    "max": 1600
+    "min": 980,
+    "center": 1560,
+    "max": 1920
   },
   {
     "pin": 21,
-    "min": 580,
-    "center": 1200,
-    "max": 1460
+    "min": 1020,
+    "center": 1620,
+    "max": 1980
   },
   {
     "pin": 22,
     "min": 560,
-    "center": 1540,
-    "max": 2140
+    "center": 1600,
+    "max": 2240
   },
   {
     "pin": 23,
     "min": 500,
-    "center": 1380,
+    "center": 1500,
     "max": 2500
   },
   {
     "pin": 24,
-    "min": 660,
-    "center": 1040,
-    "max": 1720
+    "min": 960,
+    "center": 1500,
+    "max": 2060
   },
   {
     "pin": 25,
     "min": 500,
-    "center": 1720,
+    "center": 1500,
     "max": 2500
   },
   {
     "pin": 27,
-    "min": 1200,
-    "center": 1560,
-    "max": 2140
-  },
-  {
-    "pin": 525,
-    "min": 500,
+    "min": 1080,
     "center": 1500,
-    "max": 2500
+    "max": 2080
   }
 ]

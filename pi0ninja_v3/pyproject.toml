@@ -17,6 +17,7 @@ dependencies = [
     "googlesearch-python",
     "pyngrok",
     "python-multipart",
+    "qrcode[pil]",
 ]
 
 [project.scripts]

@@ -26,22 +26,29 @@ class ServoController:
         self._initialize_servos()
 
     def _initialize_servos(self):
-        """Loads servo definitions and initializes CalibrableServo objects."""
+        """Loads servo definitions, initializes CalibrableServo objects, and centers them."""
         try:
             with open(SERVO_CONFIG_FILE, 'r') as f:
                 servo_configs = json.load(f)
             
+            print("Initializing and centering servos...")
             for config in servo_configs:
                 pin = config['pin']
-                # CalibrableServo loads its own config from the file
                 servo = CalibrableServo(
                     self.pi,
                     pin,
                     conf_file=SERVO_CONFIG_FILE
                 )
                 self.servos[pin] = servo
-                self.servo_definitions[pin] = config # Keep for reference
-                print(f"Initialized servo on pin {pin}")
+                self.servo_definitions[pin] = config
+                
+                # Set initial position to center to activate the servo
+                servo.move_center()
+                print(f"Initialized and centered servo on pin {pin}")
+            
+            # Give servos time to reach the center position
+            time.sleep(0.5)
+            print("All servos centered.")
 
         except FileNotFoundError:
             raise RuntimeError(f"Error: {SERVO_CONFIG_FILE} not found.")

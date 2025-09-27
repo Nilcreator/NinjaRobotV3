@@ -36,7 +36,7 @@ class NinjaAgent:
         )
 
         self.model = genai.GenerativeModel(
-            model_name='gemini-1.5-flash',
+            model_name='gemini-2.5-flash',
             generation_config=GenerationConfig(temperature=0.7),
             tools=[self.search_tool],
             system_instruction=self.system_prompt

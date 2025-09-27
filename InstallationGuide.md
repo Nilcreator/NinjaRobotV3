@@ -228,10 +228,11 @@ This is the most exciting part! You will now start the main web server that lets
 
 #### **Step 4: Connect and Chat!**
 
-*   **What to do:** When the server starts, it will print several URLs. To use voice chat, you **must** use the secure public URL.
-    1. Look for the line that says `Secure Public URL (HTTPS): https://<random-string>.ngrok-free.app` and open that URL in a browser.
-    2. The first time you open the page, a popup will ask for your Gemini API Key. Paste the key you got in Step 1.
-    3. The interface will load. You can now talk to your robot!
+*   **What to do:** When the server starts, it will print several URLs and display a QR code on its screen.
+    1.  **For easy access on a mobile device**, simply scan the QR code on the robot's LCD screen with your phone's camera.
+    2.  Alternatively, to use voice chat from a computer, you **must** use the secure public URL. Look for the line in the terminal that says `Secure Public URL (HTTPS): https://<random-string>.ngrok-free.app` and open that URL in a browser.
+    3.  The first time you open the page, a popup will ask for your Gemini API Key. Paste the key you got in Step 1.
+    4.  The interface will load. You can now talk to your robot!
 
 *   **How to Interact:**
     *   **Text Chat:** Type a command like "say hello" or "raise your left arm" into the chat box and press Enter.

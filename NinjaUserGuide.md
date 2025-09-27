@@ -47,7 +47,7 @@ To enable this feature, you need to link `ngrok` to a free account.
     ./ngrok config add-authtoken <YOUR_AUTHTOKEN>
     ```
 
-**Step 2: Start the Server and Get the URL**
+**Step 2: Start the Server and Connect**
 
 Now, just start the server as usual.
 
@@ -55,12 +55,13 @@ Now, just start the server as usual.
     ```bash
     uv run web-server
     ```
-2.  **Find Your Public URL**: When the server starts, look for a line in the terminal output like this:
-    ```
-    - Secure Public URL (HTTPS): https://<random-string>.ngrok-free.app
-    ```
-
-You can use this `https://` URL in any browser to access the robot's control panel from anywhere.
+2.  **Access the Web Interface**: The robot will now perform its startup sequence:
+    *   First, a **QR code** will appear on the robot's LCD screen. For the easiest connection, scan this code with your smartphone or tablet to instantly open the control interface. The QR code will be displayed for 60 seconds.
+    *   After 60 seconds, the screen will switch to an **idle face**, indicating that the robot is fully booted and ready for commands.
+    *   Alternatively, you can always connect by typing the **Public URL** from the terminal into your browser. Look for a line in the output like this:
+        ```
+        - Secure Public URL (HTTPS): https://<random-string>.ngrok-free.app
+        ```
 
 (Example Interactions remain the same)
 

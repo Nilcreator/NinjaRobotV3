@@ -35,7 +35,9 @@ The web server features a conversational AI agent powered by Google's Gemini mod
 
 -   **JSON Parsing Errors**: The AI model may occasionally return responses that are not perfectly valid JSON (e.g., using single quotes), causing parsing errors. The current solution is to use a strict system prompt that explicitly instructs the model to return valid, double-quoted JSON.
 
-**Automated Secure Tunneling (Optional)**: The web server (`web_server.py`) uses the `pyngrok` library to manage an `ngrok` secure tunnel. While no longer required for the core text-based functionality, this is preserved to provide a stable, secure HTTPS endpoint for accessing the web UI from outside the local network. `pyngrok` handles the entire lifecycle of the `ngrok` process. The `pi0ninja_v3` module includes `pyngrok` as a dependency.
+**Display Animation Architecture**: To solve LCD corruption issues ("noise"), the `AnimatedFaces` class was refactored to be fully thread-safe. It now internally manages a single `threading.Thread` for its animation loop. A new `_start_animation` method ensures that any active animation thread is properly stopped and joined before a new one begins, preventing multiple threads from accessing the SPI bus simultaneously. The `web_server.py` code was simplified to call the `play_*` methods of this class via `asyncio.to_thread`, offloading all complex thread management and cancellation logic to the `AnimatedFaces` class itself. This has fixed the race condition and stabilized the display.
+
+**Servo Initialization**: The `ServoController` in `movement_recorder.py` has been updated to move all servos to their center position upon initialization. This resolves a `pigpio` warning and bug where the servo's state could not be read before it was first moved, leading to jerky initial movements.
 
 **Frontend Architecture (`index.html` and `main.js`)**
 

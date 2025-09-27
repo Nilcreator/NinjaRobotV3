@@ -16,6 +16,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel
 from dotenv import load_dotenv, set_key
+import qrcode
 
 # Import all hardware controllers and utility functions
 from pi0ninja_v3.movement_recorder import ServoController, load_movements
@@ -42,19 +43,20 @@ class SetApiKeyRequest(BaseModel):
 class AgentChatRequest(BaseModel):
     message: str
 
-# --- Ngrok and Hardware Lifecycle Management ---
+# --- Lifecycle Management ---
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    # --- Startup ---
     print("Initializing hardware controllers...")
     pi = pigpio.pi()
     if not pi.connected:
         raise RuntimeError("Could not connect to pigpio daemon.")
 
+    # Initialize controllers
     controllers["servo"] = ServoController()
     controllers["display"] = ST7789V()
     controllers["distance_sensor"] = VL53L0X(pi)
     controllers["faces"] = AnimatedFaces(controllers["display"])
-
     try:
         with open(BUZZER_CONFIG_FILE, 'r') as f:
             buzzer_pin = json.load(f)['pin']
@@ -65,7 +67,9 @@ async def lifespan(app: FastAPI):
 
     app.state.controllers = controllers
     app.state.ninja_agent = None
+    app.state.first_interaction = True
 
+    # Load API Key and initialize Agent
     load_dotenv(dotenv_path=DOTENV_PATH)
     api_key = os.getenv("GEMINI_API_KEY")
     if api_key:
@@ -77,9 +81,58 @@ async def lifespan(app: FastAPI):
     else:
         print("GEMINI_API_KEY not found in .env file. AI Agent is not active.")
 
+    print("All hardware and AI Agent initialized.")
+    print("\nWaiting for application startup... (Press CTRL+C to quit)")
+
+    async def network_setup_and_display():
+        port = 8000
+        hostname = socket.gethostname()
+        try:
+            s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+            s.connect(("8.8.8.8", 80))
+            ip_address = s.getsockname()[0]
+        except Exception:
+            ip_address = "127.0.0.1"
+        finally:
+            s.close()
+
+        print("--- NinjaRobot Web Server is starting! ---")
+        print(f"Connect from a browser on the same network:\n  - By Hostname:  http://{hostname}.local:{port}\n  - By IP Address: http://{ip_address}:{port}")
+
+        public_url = None
+        for attempt in range(3):
+            try:
+                public_url = ngrok.connect(port, "http").public_url
+                print(f"  - Secure Public URL (HTTPS): {public_url}")
+                break
+            except Exception as e:
+                print(f"Could not start ngrok (attempt {attempt + 1}/3). Error: {e}")
+                if attempt < 2:
+                    await asyncio.sleep(5)
+                else:
+                    print("Failed to start ngrok after multiple attempts.")
+        
+        if public_url:
+            try:
+                print("Generating and displaying QR code on LCD...")
+                qr_img = qrcode.make(public_url)
+                qr_img = qr_img.convert('RGB')
+                qr_img = qr_img.resize((controllers["display"].width, controllers["display"].height))
+                controllers["display"].display(qr_img)
+                print("QR code displayed. It will be cleared on first user interaction.")
+            except Exception as e:
+                print(f"Could not display QR code on LCD: {e}")
+        else:
+            # If ngrok fails, just go straight to idle
+            await asyncio.to_thread(controllers["faces"].play_idle)
+
+    asyncio.create_task(network_setup_and_display())
+    
     yield
 
+    # --- Shutdown ---
     print("Shutting down hardware controllers and ngrok...")
+    controllers["faces"].stop() # Stop animation thread
     if controllers.get("servo"):
         controllers["servo"].cleanup()
     if controllers.get("display"):
@@ -91,23 +144,43 @@ async def lifespan(app: FastAPI):
     pi.stop()
     ngrok.kill()
 
-# --- Helper function for non-blocking robot actions ---
-async def execute_robot_actions(action_plan: dict, app_controllers: dict):
+# --- Helper Functions ---
+
+async def handle_first_interaction(request: Request):
+    if request.app.state.first_interaction:
+        request.app.state.first_interaction = False
+        print("First interaction detected. Switching to idle face.")
+        faces_controller = request.app.state.controllers.get("faces")
+        if faces_controller:
+            # The play_idle method is now thread-safe and manages its own thread
+            await asyncio.to_thread(faces_controller.play_idle)
+
+async def execute_robot_actions(request: Request, action_plan: dict):
+    app_controllers = request.app.state.controllers
     face = action_plan.get("face")
     sound = action_plan.get("sound")
     movement = action_plan.get("movement")
-    tasks = []
+    
+    # Create a list of tasks to run concurrently
+    action_tasks = []
+
     if face:
         faces_controller = app_controllers.get("faces")
         method_to_call = getattr(faces_controller, f"play_{face}", None)
         if method_to_call:
-            tasks.append(asyncio.to_thread(method_to_call, duration_s=3))
+            async def play_face_and_return_to_idle():
+                # This is a blocking call, so it runs in a thread
+                await asyncio.to_thread(method_to_call, duration_s=3)
+                # Once done, return to idle. Also a blocking call.
+                await asyncio.to_thread(faces_controller.play_idle)
+            action_tasks.append(asyncio.create_task(play_face_and_return_to_idle()))
+
     if sound:
         buzzer = app_controllers.get("buzzer")
         if buzzer:
             melody = RobotSoundPlayer.SOUNDS.get(sound)
             if melody:
-                def play_sound():
+                def play_sound_thread():
                     for note_name, duration in melody:
                         if note_name == 'pause':
                             time.sleep(duration)
@@ -115,10 +188,9 @@ async def execute_robot_actions(action_plan: dict, app_controllers: dict):
                             frequency = RobotSoundPlayer.NOTES.get(note_name)
                             if frequency:
                                 buzzer.play_sound(frequency, duration)
-                                time.sleep(0.01)
-                tasks.append(asyncio.to_thread(play_sound))
-    if tasks:
-        await asyncio.gather(*tasks)
+                                time.sleep(0.01)  # Brief pause
+                action_tasks.append(asyncio.to_thread(play_sound_thread))
+
     if movement:
         servo_controller = app_controllers.get("servo")
         all_movements = load_movements()
@@ -128,7 +200,10 @@ async def execute_robot_actions(action_plan: dict, app_controllers: dict):
                 for step in sequence:
                     servo_controller.move_servos(step['moves'], step['speed'])
                     time.sleep(0.1)
-            await asyncio.to_thread(run_movement)
+            action_tasks.append(asyncio.to_thread(run_movement))
+
+    if action_tasks:
+        await asyncio.gather(*action_tasks)
 
 # --- API Endpoints ---
 @api_router.get("/agent/status")
@@ -146,44 +221,43 @@ async def set_api_key(payload: SetApiKeyRequest, request: Request):
 
 @api_router.post("/agent/chat")
 async def agent_chat(payload: AgentChatRequest, request: Request):
+    await handle_first_interaction(request)
     agent = request.app.state.ninja_agent
     if not agent:
         raise HTTPException(status_code=400, detail="Agent not active.")
     result = await agent.process_command(payload.message)
     if "action_plan" in result and result["action_plan"]:
-        asyncio.create_task(execute_robot_actions(result["action_plan"], request.app.state.controllers))
+        asyncio.create_task(execute_robot_actions(request, result["action_plan"]))
     return {"response": result.get("response"), "log": result.get("log")}
-
 
 @api_router.post("/agent/chat_voice")
 async def agent_chat_voice(request: Request, audio_file: UploadFile = File(...)):
+    await handle_first_interaction(request)
     agent = request.app.state.ninja_agent
     if not agent:
         raise HTTPException(status_code=400, detail="Agent not active.")
 
-    # Create a temporary file to store the uploaded audio
     try:
         with tempfile.NamedTemporaryFile(delete=False, suffix=".webm") as tmp:
             shutil.copyfileobj(audio_file.file, tmp)
             tmp_path = tmp.name
         
-        # Process the audio file
         result = await agent.process_audio_command(tmp_path)
         
-        # Schedule robot actions if any
         if "action_plan" in result and result["action_plan"]:
-            asyncio.create_task(execute_robot_actions(result["action_plan"], request.app.state.controllers))
+            asyncio.create_task(execute_robot_actions(request, result["action_plan"]))
             
         return {"response": result.get("response"), "log": result.get("log")}
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error processing audio file: {e}")
     finally:
-        # Clean up the temporary file
         if 'tmp_path' in locals() and os.path.exists(tmp_path):
             os.unlink(tmp_path)
-        # Ensure the uploaded file is closed
         await audio_file.close()
+
+# ... (rest of the endpoints remain the same)
+
 @api_router.get("/servos/movements")
 def get_servo_movements():
     return {"movements": list(load_movements().keys())}
@@ -244,8 +318,7 @@ def get_distance(request: Request):
 
 # --- FastAPI App Initialization ---
 app = FastAPI(lifespan=lifespan)
-app.mount("/static", StaticFiles(directory=os.path.join(base_dir, "static")),
-            name="static")
+app.mount("/static", StaticFiles(directory=os.path.join(base_dir, "static")), name="static")
 templates = Jinja2Templates(directory=os.path.join(base_dir, "templates"))
 app.include_router(api_router)
 
@@ -271,32 +344,6 @@ async def websocket_distance_endpoint(websocket: WebSocket):
 def main():
     port = 8000
     host = "0.0.0.0"
-    
-    # Set up ngrok tunnel
-    try:
-        # pyngrok will automatically find the ngrok executable and use the auth token from the config file
-        public_url = ngrok.connect(port, "http").public_url
-        print(f"  - For Voice (HTTPS): {public_url}")
-    except Exception as e:
-        print(f"Could not start ngrok. Please ensure it is configured correctly. Error: {e}")
-        public_url = None
-
-    hostname = socket.gethostname()
-    try:
-        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        s.connect(("8.8.8.8", 80))
-        ip_address = s.getsockname()[0]
-    except Exception:
-        ip_address = "127.0.0.1"
-    finally:
-        s.close()
-
-    print("--- NinjaRobot Web Server is starting! ---")
-    print(f"Connect from a browser on the same network:\n  - By Hostname:  http://{hostname}.local:{port}\n  - By IP Address: http://{ip_address}:{port}")
-    if public_url:
-        print(f"  - Secure Public URL (HTTPS): {public_url}")
-    print("\nWaiting for application startup... (Press CTRL+C to quit)")
-
     uvicorn.run("pi0ninja_v3.web_server:app", host=host, port=port, reload=True, log_level="warning")
 
 if __name__ == "__main__":

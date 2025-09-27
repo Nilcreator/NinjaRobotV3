@@ -14,6 +14,68 @@ This installs all necessary local packages in editable mode.
 
 ## Development History
 
+### 2025-09-27: Fixed Sound Playback Crash
+
+- **Problem**: The application would crash with an `AttributeError` when the AI agent tried to play a sound, particularly after a voice command.
+- **Root Cause**: A regression was introduced in a previous refactoring. The code was incorrectly calling the `RobotSoundPlayer.play` method as a static method and passing the wrong arguments, leading to the error.
+- **Solution**: The sound playback logic in `web_server.py` was corrected. It now uses the available `buzzer` controller to correctly iterate through the sound's melody and play each note, resolving the crash.
+
+### 2025-09-27: Refactored Display Logic for Thread-Safety
+
+- **Problem**: The LCD screen displayed corrupted data ("noise") when changing facial expressions, indicating a critical race condition.
+- **Root Cause**: The `AnimatedFaces` class was not thread-safe. Multiple threads were being created by the web server to play different animations, and they were attempting to write to the SPI display simultaneously without any locking or coordination.
+- **Solution**: The `AnimatedFaces` class in `facial_expressions.py` was completely refactored. It now manages its own internal `threading.Thread` and uses a `threading.Event` to ensure that only one animation can be active at a time. A new `_start_animation` method safely stops any existing animation thread before starting a new one, eliminating the race condition. The logic in `web_server.py` was then greatly simplified to rely on this new thread-safe class, removing the need for complex and faulty `asyncio.Task` management for the display.
+
+### 2025-09-27: Display Task and Shutdown Reliability Fix
+
+- **Problem**: The server would freeze on shutdown, and the LCD screen would show noise when changing facial expressions.
+- **Root Cause**: The background display task was not being managed correctly, leading to an infinite loop blocking shutdown and race conditions causing screen corruption.
+- **Solution**:
+    - **Centralized Task Management**: Implemented a robust task management system for all display animations. A single, authoritative background task is now tracked in the application state. This task is properly cancelled and replaced when expressions change, eliminating race conditions.
+    - **Graceful Shutdown**: The `lifespan` manager now explicitly cancels the display task on shutdown, allowing the server to terminate cleanly and fixing the freeze on Ctrl+C.
+    - **Idle on Interaction**: The QR code is now displayed until the user sends their first command, at which point the screen transitions to a persistent idle face.
+
+### 2025-09-27: Server Shutdown and Interaction Fixes
+
+- **Problem**: The server would freeze on shutdown (Ctrl+C), and the display did not provide feedback when a user started interacting with the robot.
+- **Root Cause**: The background display task was not being cancelled on shutdown, causing an infinite loop to block the process from exiting.
+- **Solution**:
+    - **Shutdown Fix**: Implemented proper background task management in the `lifespan` manager. The display task is now tracked and explicitly cancelled on shutdown, allowing the server to exit cleanly.
+    - **Idle Face on Interaction**: The display now shows the QR code indefinitely until a user sends the first chat command. Upon this first interaction, the QR code is replaced by a persistent `idle` face animation, providing clear visual feedback that the robot is "awake".
+
+### 2025-09-27: QR Code Display Fix and Startup Refinement
+
+- **Problem**: The QR code display on the LCD screen was crashing the application due to an incorrect image format, and the startup sequence was not optimal.
+- **Root Cause**: The QR code image was being generated in a grayscale format, which was incompatible with the display driver that expected an RGB image. 
+- **Solution**:
+    - Modified `web_server.py` to explicitly convert the QR code image to 'RGB' format before displaying it, fixing the crash.
+    - Refactored the startup logic within the `lifespan` manager to ensure all hardware and agent initializations are logged before the network and display sequences begin, providing a clearer startup log for the user.
+
+### 2025-09-27: Ngrok Connection Resiliency
+
+- **Problem**: The `ngrok` service was failing to start due to network timeouts, preventing the web server from being accessible remotely.
+- **Root Cause**: Transient network issues were causing the initial `ngrok.connect()` call to fail.
+- **Solution**: Implemented a retry mechanism in `web_server.py`. The application now attempts to connect to the ngrok service up to 3 times with a 5-second delay between attempts, making the startup process more resilient to temporary network glitches.
+
+### 2025-09-27: Startup and Servo Performance Optimization
+
+- **Change**: Overhauled the web server startup sequence and fixed a critical servo initialization bug.
+- **Reason**: To provide a better user experience on startup and to resolve servo performance issues.
+- **Implementation**:
+    - **Startup Sequence**: The `web_server.py` `lifespan` manager now orchestrates the entire startup. It starts `ngrok`, displays a QR code of the URL on the robot's LCD for 60 seconds, and then transitions the display to an `idle` face to show the robot is ready.
+    - **Servo Fix**: Modified `movement_recorder.py` to move all servos to their center position upon initialization. This "activates" the servos with `pigpio`, eliminating `pigpio err` warnings and ensuring smooth movement from a known starting state.
+- **Documentation**: Updated all relevant user and developer guides to reflect the new, more robust startup procedure and the servo performance fix.
+
+### 2025-09-27: QR Code for Easy Access
+
+- **Change**: The web server now generates a QR code of the secure `ngrok` URL and displays it on the robot's LCD screen upon startup.
+- **Reason**: To provide a fast and convenient way for users to access the web control interface on a mobile device without having to manually type the URL.
+- **Implementation**:
+    - Added the `qrcode` library as a dependency.
+    - Modified `web_server.py` to use the `qrcode` library to generate an image of the URL.
+    - Integrated the `pi0disp` driver to display the generated QR code image on the ST7789V screen.
+- **Documentation**: Updated the `InstallationGuide.md`, `NinjaUserGuide.md`, and `NinjaDevGuide.md` to reflect this new feature.
+
 ### 2025-09-23: Voice Input Upload Fix
 
 - **Problem**: The voice input feature failed with an error indicating the uploaded file processing had `FAILED`.
