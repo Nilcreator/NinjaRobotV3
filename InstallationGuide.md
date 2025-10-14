@@ -52,12 +52,12 @@ The Ninja Robot HAT makes it easy to connect everything. Here’s a reference fo
 | :--- | :--- |
 | GND | GND |
 | VCC | 3V3 |
-| CLK | D11 |
-| DIN | D10 |
-| RST | D24 |
-| DC | D25 |
-| CS | D8 |
-| BL | D18 |
+| SCL| SCLK |
+| SDA | MOSI |
+| RST | 19 |
+| DC | 18 |
+| CS | CE0 |
+| BL | 20 |
 
 #### **Buzzer (Voice)**
 
