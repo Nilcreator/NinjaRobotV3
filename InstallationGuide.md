@@ -59,6 +59,18 @@ The Ninja Robot HAT makes it easy to connect everything. Here’s a reference fo
 | CS | CE0 |
 | BL | 20 |
 
+#### **2.0 inch SPI Display (Face)**
+| Pin | Ninja HAT Pin Label |
+| :--- | :--- |
+| VCC | 3V3 |
+| GND | GND |
+| DIN| MOSI |
+| CLK | SCLK |
+| CS | CE0 |
+| DC | 18 |
+| RST | 19 |
+| BL | 20 |
+
 #### **Buzzer (Voice)**
 
 | Buzzer Pin | Connected to GPIO Pin |
