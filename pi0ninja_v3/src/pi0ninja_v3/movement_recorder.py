@@ -9,8 +9,10 @@ import tty
 import copy
 from piservo0.core.calibrable_servo import CalibrableServo
 
-# Define file paths based on the script's location
-NINJA_ROBOT_V3_ROOT = "/home/rogerchang/NinjaRobotV3"
+# Determine the project root directory dynamically by navigating up from this file's location.
+# This ensures the application works correctly regardless of where it is run from.
+_this_file_path = os.path.abspath(__file__)
+NINJA_ROBOT_V3_ROOT = os.path.normpath(os.path.join(os.path.dirname(_this_file_path), '..', '..', '..'))
 SERVO_CONFIG_FILE = os.path.join(NINJA_ROBOT_V3_ROOT, "servo.json")
 MOVEMENTS_FILE = os.path.join(NINJA_ROBOT_V3_ROOT, "servo_movement.json")
 
