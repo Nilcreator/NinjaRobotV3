@@ -28,7 +28,10 @@ from pi0ninja_v3.robot_sound import RobotSoundPlayer
 from pi0ninja_v3.ninja_agent import NinjaAgent
 
 # --- Configuration and Setup ---
-NINJA_ROBOT_V3_ROOT = "/home/rogerchang/NinjaRobotV3"
+# Determine the project root directory dynamically by navigating up from this file's location.
+# This ensures the application works correctly regardless of where it is run from.
+_this_file_path = os.path.abspath(__file__)
+NINJA_ROBOT_V3_ROOT = os.path.normpath(os.path.join(os.path.dirname(_this_file_path), '..', '..', '..'))
 BUZZER_CONFIG_FILE = os.path.join(NINJA_ROBOT_V3_ROOT, "buzzer.json")
 DOTENV_PATH = os.path.join(NINJA_ROBOT_V3_ROOT, ".env")
 
